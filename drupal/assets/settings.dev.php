@@ -23,13 +23,6 @@ use Composer\Semver\Comparator;
  * to 0 or -1 in production.
  */
 
-// If for some reason you need to avoid this site on a project, you can add
-// DDEV_BROOKSDIGITAL_DRUPAL_SETTINGS_DISABLE=true to your '.ddev/config.yaml'
-// file
-if (!empty($_ENV['DDEV_BROOKSDIGITAL_DRUPAL_SETTINGS_DISABLE'])) {
-  return;
-}
-
 if (PHP_VERSION_ID < 80300) {
   assert_options(ASSERT_ACTIVE, TRUE);
   assert_options(ASSERT_EXCEPTION, TRUE);
@@ -47,7 +40,7 @@ $settings['rebuild_access'] = TRUE;
 $settings['extension_discovery_scan_tests'] = TRUE;
 
 // A local dev services.yml file than can be edited as necessary
-$settings['container_yamls'][] =  '/var/www/html/.ddev/brooksdigital/base/assets/drupal/dev.services.yml';
+$settings['container_yamls'][] =  '/var/www/html/.ddev/drupal/assets/dev.services.yml';
 
 // Disabling caches
 $settings['cache']['bins']['render'] = 'cache.backend.null';
