@@ -1,0 +1,15 @@
+#ddev-generated - This file was copied by ddev-brooksdigital add-on
+# You can remove these lines if on your project root
+ahoyapi: v2
+commands:
+  readme:
+    usage: 'README.md commands'
+    imports:
+      # addon needs to be installed locally on ddev with 'ddev get .'
+      - ./.ddev/readme/.ahoy.readme.yml
+
+  drupal:
+    usage: 'Drupal commands'
+    imports:
+      # addon needs to be installed locally on ddev with 'ddev get .'
+      - ./.ddev/brooksdigital/base/.ahoy.brooksdigital-base.drupal.yml
