@@ -20,7 +20,7 @@ if [[ "$DDEV_PROJECT_TYPE" == *"drupal"* ]]; then
   drush cr -y
   drush deploy:hook -y
 
-  /var/www/html/.ddev/pimp-my-shell/scripts/drush-uli.sh
+  /var/www/html/.ddev/drupal/scripts/drush-uli.sh
 else
   gum log --level debug "Not drupal"
 fi
