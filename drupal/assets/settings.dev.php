@@ -36,7 +36,10 @@ $settings['trusted_host_patterns'] = array(
 $settings['skip_permissions_hardening'] = TRUE;
 $config['system.performance']['css']['preprocess'] = FALSE;
 $config['system.performance']['js']['preprocess'] = FALSE;
-$settings['rebuild_access'] = TRUE;
+// In general this is not used as most devs rely on drush cr and other handy
+// ways of rebuilding cache. If needed you can still add it to your
+// settings.local.php
+// $settings['rebuild_access'] = TRUE;
 $settings['extension_discovery_scan_tests'] = TRUE;
 
 // A local dev services.yml file than can be edited as necessary
