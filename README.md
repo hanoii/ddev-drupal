@@ -30,6 +30,13 @@ $ddev_dev_settings = '/var/www/html/.ddev/drupal/assets/settings.dev.php';
 if (getenv('IS_DDEV_PROJECT') == 'true' && is_readable($ddev_dev_settings)) {
   require $ddev_dev_settings;
 }
+
+// Additionally, or alternatively, you can add your own settings.dev.php to your 
+// site settings directory.
+$project_dev_settings = $app_root . '/' . $site_path . '/settings.dev.php';
+if (getenv('IS_DDEV_PROJECT') == 'true' && is_readable($project_dev_settings)) {
+  require $project_dev_settings;
+}
 ```
 
 **Contributed and maintained by [@hanoii](https://github.com/hanoii)**
