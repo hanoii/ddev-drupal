@@ -36,7 +36,10 @@ $settings['trusted_host_patterns'] = array(
 $settings['skip_permissions_hardening'] = TRUE;
 $config['system.performance']['css']['preprocess'] = FALSE;
 $config['system.performance']['js']['preprocess'] = FALSE;
-$settings['rebuild_access'] = TRUE;
+// In general this is not used as most devs rely on drush cr and other handy
+// ways of rebuilding cache. If needed you can still add it to your
+// settings.local.php
+// $settings['rebuild_access'] = TRUE;
 $settings['extension_discovery_scan_tests'] = TRUE;
 
 // A local dev services.yml file than can be edited as necessary
@@ -60,7 +63,20 @@ if (Comparator::lessThan(\Drupal::VERSION, '8.8.0')) {
 else {
   $settings['file_temp_path'] = '/tmp';
 }
+
 // Easilly accessible local private file system
+// We store any potentially public and private path setting stored above this file
+// in case we need to reference them next in other settings file inclussions
+// (i.e. ddev dev -> project dev -> local)
+// While the following sensible default will mostly work, in complex projects
+// of with multisite setup we will probably need an extre dev settings file for
+// the project.
+if (!empty($settings['file_public_path'])) {
+  $ddev_drupal_settings_original['file_public_path'] = $settings['file_public_path'];
+}
+if (!empty($settings['file_private_path'])) {
+  $ddev_drupal_settings_original['file_private_path'] = $settings['file_private_path'];
+}
 $settings['file_public_path'] = 'sites/default/files';
 $settings['file_private_path'] = 'sites/default/files/private';
 
