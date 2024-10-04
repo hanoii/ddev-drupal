@@ -82,7 +82,9 @@ $settings['file_private_path'] = 'sites/default/files/private';
 
 // assumes a config split entity with an id of 'development'
 $config['config_split.config_split.development']['status'] = TRUE;
+
 $config['stage_file_proxy.settings']['hotlink'] = TRUE;
+$config['stage_file_proxy.settings']['use_imagecache_root'] = false;
 
 // This needs to be set manually on some of your project' settings file.
 // $config['stage_file_proxy.settings']['origin'] = 'https://www.example.com';

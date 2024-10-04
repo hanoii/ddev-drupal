@@ -6,4 +6,4 @@ commands:
     usage: 'Drupal commands'
     imports:
       # addon needs to be installed locally on ddev with 'ddev get .'
-      - ./.ddev/brooksdigital/base/.ahoy.drupal.yml
+      - ./.ddev/drupal/.ahoy.drupal.yml
