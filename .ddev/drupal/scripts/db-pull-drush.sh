@@ -60,13 +60,16 @@ if [[ -z $alias ]]; then
   exit 1
 fi
 
-sql_filename=dump-${DDEV_PROJECT}.sql
+clean_alias_filename=$(echo -n "${alias}" | perl -pe 's/@//g and s/[^0-9a-zA-Z]/-/g')
+sql_filename=dump-${clean_alias_filename}.sql
+sql_filename_gz="${sql_filename}.gz"
 
 if [[ "$download" == "true"  ]]; then
   gum log --level info Dumping remote database on ${alias}...
-  gum spin --title="Running drush sql-dump on the remote..." --show-output -- drush ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}
-  gum log --level info Downloading remote database from ${alias}...
-  drush rsync ${alias}:/tmp/${sql_filename}.gz . -y -- --delete
+  drush ${alias} ssh "rm -f /tmp/${sql_filename_gz}"
+  sh -c "{ { rm -f /tmp/db-pull-drush.ret ; drush -n ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}; ret=\$?; echo \$ret > /tmp/db-pull-drush.ret ; } | { while [ ! -f /tmp/db-pull-drush.ret ] ; do drush ${alias} ssh '[ -f /tmp/${sql_filename_gz} ] && du -hs /tmp/${sql_filename_gz} || true'; sleep 1; done; }; exit \$(cat /tmp/db-pull-drush.ret); }"
+  gum log --level info Downloading remote database from ${alias} to ${sql_filename_gz}...
+  drush rsync ${alias}:/tmp/${sql_filename_gz} . -y -- --delete
 fi
 
 if [[ ! -f ${sql_filename}.gz ]]; then
@@ -77,7 +80,7 @@ fi
 mysql -uroot -proot -e 'DROP DATABASE IF EXISTS db' mysql
 mysql -uroot -proot -e 'CREATE DATABASE db' mysql
 gum log --level info Importing remote database...
-pv dump-${DDEV_PROJECT}.sql.gz | gunzip | mysql db
+pv ${sql_filename_gz} | gunzip | mysql db
 
 if [ -n "$post_import" ]; then
   # Run all post-import-db scripts
