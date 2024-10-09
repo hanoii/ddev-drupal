@@ -14,6 +14,7 @@ Usage: ${DDEV_DRUPAL_HELP_CMD-$0} [options]
   -a ALIAS          Required! The remote drush alias (likely ssh) from where the database will be dumped. i.e. @live
   -n                Do not download, expect the dump to be already downloaded.
   -o                Import only, do not run post-import-db hooks.
+  -v                Add -vvvv to drush commands
 EOM
 )
 
@@ -24,9 +25,13 @@ function print_help() {
 download=true
 post_import=true
 alias=
+verbose=
 
-while getopts ":hnoa:" option; do
+while getopts ":hvnoa:" option; do
   case ${option} in
+    v)
+      verbose="-vvvv"
+      ;;
     h)
       print_help
       exit 0
@@ -65,11 +70,12 @@ sql_filename=dump-${clean_alias_filename}.sql
 sql_filename_gz="${sql_filename}.gz"
 
 if [[ "$download" == "true"  ]]; then
-  gum log --level info Dumping remote database on ${alias}...
-  drush ${alias} ssh "rm -f /tmp/${sql_filename_gz}"
-  sh -c "{ { rm -f /tmp/db-pull-drush.ret ; drush -n ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}; ret=\$?; echo \$ret > /tmp/db-pull-drush.ret ; } | { while [ ! -f /tmp/db-pull-drush.ret ] ; do drush ${alias} ssh '[ -f /tmp/${sql_filename_gz} ] && du -hs /tmp/${sql_filename_gz} || true'; sleep 1; done; }; exit \$(cat /tmp/db-pull-drush.ret); }"
+  gum log --level info -- Dumping remote database on ${alias}...
+  gum log --level info -- A progress of an increasing sql dump file size should appear, if not there might be connection issues, try adding -v ...
+  drush $verbose ${alias} ssh "rm -f /tmp/${sql_filename_gz}"
+  sh -c "{ { rm -f /tmp/db-pull-drush.ret ; drush $verbose -n ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}; ret=\$?; echo \$ret > /tmp/db-pull-drush.ret ; } | { while [ ! -f /tmp/db-pull-drush.ret ] ; do drush ${alias} ssh '[ -f /tmp/${sql_filename_gz} ] && du -hs /tmp/${sql_filename_gz} || true'; sleep 2; done; }; exit \$(cat /tmp/db-pull-drush.ret); }"
   gum log --level info Downloading remote database from ${alias} to ${sql_filename_gz}...
-  drush rsync ${alias}:/tmp/${sql_filename_gz} . -y -- --delete
+  drush $verbose rsync ${alias}:/tmp/${sql_filename_gz} . -y -- --delete
 fi
 
 if [[ ! -f ${sql_filename}.gz ]]; then
