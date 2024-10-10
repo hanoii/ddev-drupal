@@ -26,16 +26,17 @@ adding it to their main settings.php:
 
 ```php
 // include for settings managed by hanoii/ddev-drupal.
-$ddev_dev_settings = '/var/www/html/.ddev/drupal/assets/settings.dev.php';
-if (getenv('IS_DDEV_PROJECT') == 'true' && is_readable($ddev_dev_settings)) {
-  require $ddev_dev_settings;
-}
+if (!empty($_ENV['IS_DDEV_PROJECT']) && $_ENV['IS_DDEV_PROJECT'] == "true") {
+  $ddev_dev_settings = '/var/www/html/.ddev/drupal/assets/settings.dev.php';
+  if (is_readable($ddev_dev_settings)) {
+    require $ddev_dev_settings;
+  }
 
-// Additionally, or alternatively, you can add your own settings.dev.php to your 
-// site settings directory.
-$project_dev_settings = $app_root . '/' . $site_path . '/settings.dev.php';
-if (is_readable($project_dev_settings)) {
-  require $project_dev_settings;
+  // Additionally, look for a project-wide settings.dev.php site settings directory.
+  $project_dev_settings = $app_root . '/' . $site_path . '/settings.dev.php';
+  if (is_readable($project_dev_settings)) {
+    require $project_dev_settings;
+  }
 }
 ```
 
