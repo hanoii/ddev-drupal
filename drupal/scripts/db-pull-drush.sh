@@ -73,8 +73,25 @@ if [[ "$download" == "true"  ]]; then
   gum log --level info -- Dumping remote database on ${alias}...
   gum log --level info -- A progress of an increasing sql dump file size should appear, if not there might be connection issues, try adding -v ...
   drush $verbose ${alias} ssh "rm -f /tmp/${sql_filename_gz}"
-  sh -c "{ { rm -f /tmp/db-pull-drush.ret ; drush $verbose -n ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}; ret=\$?; echo \$ret > /tmp/db-pull-drush.ret ; } | { while [ ! -f /tmp/db-pull-drush.ret ] ; do drush ${alias} ssh '[ -f /tmp/${sql_filename_gz} ] && du -hs /tmp/${sql_filename_gz} || true'; sleep 2; done; }; exit \$(cat /tmp/db-pull-drush.ret); }"
-  gum log --level info Downloading remote database from ${alias} to ${sql_filename_gz}...
+  rm -f /tmp/db-pull-drush.ret
+  sh -c " \
+    { \
+      { \
+        drush $verbose -n ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}; \
+        ret=\$?; \
+        echo \$ret > /tmp/db-pull-drush.ret; \
+      } \
+      | \
+      { \
+        while [ ! -f /tmp/db-pull-drush.ret ]; do \
+          drush ${alias} ssh '[ -f /tmp/${sql_filename_gz} ] && du -hs /tmp/${sql_filename_gz} || true'; \
+          sleep 2; \
+          done; \
+      }; \
+      exit \$(cat /tmp/db-pull-drush.ret); \
+    } \
+    "
+    gum log --level info Downloading remote database from ${alias} to ${sql_filename_gz}...
   drush $verbose rsync ${alias}:/tmp/${sql_filename_gz} . -y -- --delete
 fi
 
