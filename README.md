@@ -26,7 +26,8 @@ adding it to their main settings.php:
 
 ```php
 // include for settings managed by hanoii/ddev-drupal.
-if (!empty($_ENV['IS_DDEV_PROJECT']) && $_ENV['IS_DDEV_PROJECT'] == "true") {
+$is_ddev_project = !empty($_ENV['IS_DDEV_PROJECT']) && $_ENV['IS_DDEV_PROJECT'] == "true";
+if ($is_ddev_project) {
   $ddev_dev_settings = '/var/www/html/.ddev/drupal/assets/settings.dev.php';
   if (is_readable($ddev_dev_settings)) {
     require $ddev_dev_settings;
