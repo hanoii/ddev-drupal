@@ -8,6 +8,16 @@ use Composer\Semver\Comparator;
  * and example.settings.local.php
  */
 
+// This include is only to add php code that would alter the behavior of this
+// settings file.
+// i.e. $settings_dev_prod = TRUE;
+$ddev_local_settings = '/var/www/html/.ddev/drupal/assets/settings.local.php';
+if (is_readable($ddev_local_settings)) {
+  require $ddev_local_settings;
+}
+
+$dev_is_prod = $settings_dev_prod === TRUE || !empty($_ENV['DDEV_DRUPAL_SETTINGS_PROD']);
+
 /**
  * Assertions.
  *
@@ -22,7 +32,6 @@ use Composer\Semver\Comparator;
  * (It cannot be changed from .htaccess or runtime) on development machines and
  * to 0 or -1 in production.
  */
-
 if (PHP_VERSION_ID < 80300) {
   assert_options(ASSERT_ACTIVE, TRUE);
   assert_options(ASSERT_EXCEPTION, TRUE);
@@ -34,8 +43,11 @@ $settings['trusted_host_patterns'] = array(
 );
 
 $settings['skip_permissions_hardening'] = TRUE;
-$config['system.performance']['css']['preprocess'] = FALSE;
-$config['system.performance']['js']['preprocess'] = FALSE;
+
+if (!$dev_is_prod) {
+  $config['system.performance']['css']['preprocess'] = FALSE;
+  $config['system.performance']['js']['preprocess'] = FALSE;
+}
 // In general this is not used as most devs rely on drush cr and other handy
 // ways of rebuilding cache. If needed you can still add it to your
 // settings.local.php
@@ -43,12 +55,14 @@ $config['system.performance']['js']['preprocess'] = FALSE;
 $settings['extension_discovery_scan_tests'] = TRUE;
 
 // A local dev services.yml file than can be edited as necessary
-$settings['container_yamls'][] =  '/var/www/html/.ddev/drupal/assets/dev.services.yml';
+if (!$dev_is_prod) {
+  $settings['container_yamls'][] =  '/var/www/html/.ddev/drupal/assets/dev.services.yml';
 
-// Disabling caches
-$settings['cache']['bins']['render'] = 'cache.backend.null';
-$settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
-$settings['cache']['bins']['page'] = 'cache.backend.null';
+  // Disabling caches
+  $settings['cache']['bins']['render'] = 'cache.backend.null';
+  $settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
+  $settings['cache']['bins']['page'] = 'cache.backend.null';
+}
 
 $config['system.logging']['error_level'] = 'verbose';
 
@@ -81,11 +95,12 @@ $settings['file_public_path'] = 'sites/default/files';
 $settings['file_private_path'] = 'sites/default/files/private';
 
 // assumes a config split entity with an id of 'development'
-$config['config_split.config_split.development']['status'] = TRUE;
+if (!$dev_is_prod) {
+  $config['config_split.config_split.development']['status'] = TRUE;
 
-$config['stage_file_proxy.settings']['hotlink'] = TRUE;
-$config['stage_file_proxy.settings']['use_imagecache_root'] = false;
+  $config['stage_file_proxy.settings']['hotlink'] = TRUE;
+  $config['stage_file_proxy.settings']['use_imagecache_root'] = false;
+}
 
 // This needs to be set manually on some of your project' settings file.
 // $config['stage_file_proxy.settings']['origin'] = 'https://www.example.com';
-
