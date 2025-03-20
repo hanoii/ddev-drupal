@@ -69,6 +69,11 @@ $config['system.logging']['error_level'] = 'verbose';
 // Local hash_salt not to use the same as remote ones.
 $settings['hash_salt'] = 'development';
 
+// Allowing insecure derivatives as hash_salt locally is different and content
+// in wysiwyg get (like from the insert module) from production would not work
+// otherwise.
+$config['image.settings']['allow_insecure_derivatives'] = TRUE;
+
 // Set temporary directory within the local filesystem.
 // https://www.drupal.org/node/3039255
 if (Comparator::lessThan(\Drupal::VERSION, '8.8.0')) {
