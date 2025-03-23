@@ -16,7 +16,11 @@ if (is_readable($ddev_local_settings)) {
   require $ddev_local_settings;
 }
 
-$dev_is_prod = !empty($settings_dev_prod) || !empty($_ENV['DDEV_DRUPAL_SETTINGS_PROD']);
+$dev_is_prod = !empty($_ENV['DDEV_DRUPAL_SETTINGS_PROD']);
+
+if (isset($settings_dev_prod)) {
+  $dev_is_prod = $settings_dev_prod;
+}
 
 /**
  * Assertions.
