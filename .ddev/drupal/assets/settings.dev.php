@@ -22,6 +22,13 @@ if (isset($settings_dev_prod)) {
   $dev_is_prod = $settings_dev_prod;
 }
 
+$dev_cache_enabled = !empty($_ENV['DDEV_DRUPAL_CACHE_ENABLED']);
+
+if (isset($settings_cache_enabled)) {
+  $dev_cache_enabled = $settings_cache_enabled;
+}
+
+
 /**
  * Assertions.
  *
@@ -59,7 +66,7 @@ if (!$dev_is_prod) {
 $settings['extension_discovery_scan_tests'] = TRUE;
 
 // A local dev services.yml file than can be edited as necessary
-if (!$dev_is_prod) {
+if (!$dev_is_prod && !$dev_cache_enabled) {
   $settings['container_yamls'][] =  '/var/www/html/.ddev/drupal/assets/dev.services.yml';
 
   // Disabling caches
