@@ -63,7 +63,7 @@ By default, this add-on is configured to put drupal in a very dev oriented mode:
 
 - No preprocessing
 - No cache whatsoever
-- Includes a dev.services.yml file that disables twig caching and add some
+- Includes a `dev.services.yml` file that disables twig caching and add some
   debugging
 - Assumes a `development` named config split that should be enabled.
 
