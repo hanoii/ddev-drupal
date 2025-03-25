@@ -11,7 +11,7 @@
   * [settings.dev.php](#settingsdevphp)
   * [.ddev/drupal/assets/settings.local.php](#ddevdrupalassetssettingslocalphp)
 - [Options](#options)
-  * [Caches enabled](#caches-enabled)
+  * [Caches as production](#caches-as-production)
   * [Close to production](#close-to-production)
 
 <!-- tocstop -->
@@ -67,9 +67,11 @@ By default, this add-on is configured to put drupal in a very dev oriented mode:
   debugging
 - Assumes a `development` named config split that should be enabled.
 
-### Caches enabled
+### Caches as production
 
-**The caches are disabled by default.**
+<!-- prettier-ignore -->
+> [!IMPORTANT]
+> All drupal caches caches are disabled by default.
 
 In case you prefer not to have this add-on disable caches and handle it
 different from how this add-on does it, you can configure either with an
@@ -92,15 +94,28 @@ $ddev_drupal_cache_production = TRUE;
 
 ### Close to production
 
-Another option is to configure this add-on to keep more settings closer to
-production (but still allow other defaults that this add-on consider improtant
-to be set on dev boxes regardless) by either setting `DDEV_DRUPAL_PRODUCTION`
-[enviroment variable][ddev-envvars] to `true` or adding a
+Another option is to configure this add-on to be less agressive in development
+settings and allow a more production-like local enviornment, **but still allow
+other defaults that this add-on consider improtant to be set on dev boxes
+regardless**.
+
+This option **would do** the following:
+
+- Avoid disabling CSS/JS preprocessing.
+- Avoid disabling caches (same as per the
+  [option above](#caches-as-production)).
+- Avoid enabling the `development` config split as well as any opinionated
+  defaults on development modules' settings.
+
+<!-- prettier-ignore -->
+> [!WARNING]
+> Make sure that your local environment has their own sensible defaults by
+> having your own dev settings as needed for each project.
+
+You can do that by either setting `DDEV_DRUPAL_PRODUCTION` [enviroment
+variable][ddev-envvars] to `true` or adding a
 [`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
 file with:
-
-[ddev-envvars]:
-  https://ddev.readthedocs.io/en/stable/users/extend/customization-extendibility/#environment-variables-for-containers-and-services
 
 ```php
 <?php
@@ -112,5 +127,8 @@ $ddev_drupal_production = TRUE;
 > [!WARNING]
 > The boolean value of `$ddev_drupal_production` will override whatever is in
 > the environment variable, allowing you to alter the functionality temporarily.
+
+[ddev-envvars]:
+  https://ddev.readthedocs.io/en/stable/users/extend/customization-extendibility/#environment-variables-for-containers-and-services
 
 **Contributed and maintained by [@hanoii](https://github.com/hanoii)**
