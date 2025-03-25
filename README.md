@@ -47,13 +47,15 @@ if ($is_ddev_project) {
 
 ### .ddev/drupal/assets/settings.local.php
 
-The settings.dev.php file of this add-on also includes, if present a
-`.ddev/drupal/assets/settings.local.php` which is also _gitignored_.
+The settings.dev.php file of this add-on also includes, if present, a
+`.ddev/drupal/assets/settings.local.php` before everything else.
 
 This files allows to configure things that will affect some defaults of this
 add-on.
 
 See [options](#options) below.
+
+This file is _gitignored_.
 
 ## Options
 
@@ -72,7 +74,7 @@ By default, this add-on is configured to put drupal in a very dev oriented mode:
 In case you prefer not to have this add-on disable caches and handle it
 different from how this add-on does it, you can configure either with an
 `DDEV_DRUPAL_CACHE_PRODUCTION` [enviroment variable][ddev-envvars] set to `true`
-of adding a
+or adding a
 [`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
 file with:
 
@@ -93,7 +95,7 @@ $ddev_drupal_cache_production = TRUE;
 Another option is to configure this add-on to keep more settings closer to
 production (but still allow other defaults that this add-on consider improtant
 to be set on dev boxes regardless) by either setting `DDEV_DRUPAL_PRODUCTION`
-[enviroment variable][ddev-envvars] to true or adding a
+[enviroment variable][ddev-envvars] to `true` or adding a
 [`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
 file with:
 
