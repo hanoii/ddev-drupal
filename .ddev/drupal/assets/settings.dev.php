@@ -16,18 +16,13 @@ if (is_readable($ddev_local_settings)) {
   require $ddev_local_settings;
 }
 
-$dev_is_prod = !empty($_ENV['DDEV_DRUPAL_SETTINGS_PROD']);
-
-if (isset($settings_dev_prod)) {
-  $dev_is_prod = $settings_dev_prod;
+if (!isset($ddev_drupal_production)) {
+  $ddev_drupal_production = !empty($_ENV['DDEV_DRUPAL_PRODUCTION']);
 }
 
-$dev_cache_enabled = !empty($_ENV['DDEV_DRUPAL_CACHE_ENABLED']);
-
-if (isset($settings_cache_enabled)) {
-  $dev_cache_enabled = $settings_cache_enabled;
+if (!isset($ddev_drupal_cache_production)) {
+  $ddev_drupal_cache_production = !empty($_ENV['DDEV_DRUPAL_CACHE_PRODUCTION']);
 }
-
 
 /**
  * Assertions.
@@ -55,7 +50,7 @@ $settings['trusted_host_patterns'] = array(
 
 $settings['skip_permissions_hardening'] = TRUE;
 
-if (!$dev_is_prod) {
+if (!$ddev_drupal_production) {
   $config['system.performance']['css']['preprocess'] = FALSE;
   $config['system.performance']['js']['preprocess'] = FALSE;
 }
@@ -66,7 +61,7 @@ if (!$dev_is_prod) {
 $settings['extension_discovery_scan_tests'] = TRUE;
 
 // A local dev services.yml file than can be edited as necessary
-if (!$dev_is_prod && !$dev_cache_enabled) {
+if (!$ddev_drupal_production && !$ddev_drupal_cache_production) {
   $settings['container_yamls'][] =  '/var/www/html/.ddev/drupal/assets/dev.services.yml';
 
   // Disabling caches
@@ -111,7 +106,7 @@ $settings['file_public_path'] = 'sites/default/files';
 $settings['file_private_path'] = 'sites/default/files/private';
 
 // assumes a config split entity with an id of 'development'
-if (!$dev_is_prod) {
+if (!$ddev_drupal_production) {
   $config['config_split.config_split.development']['status'] = TRUE;
 
   $config['stage_file_proxy.settings']['hotlink'] = TRUE;

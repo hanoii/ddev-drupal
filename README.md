@@ -11,6 +11,7 @@
   * [settings.dev.php](#settingsdevphp)
   * [.ddev/drupal/assets/settings.local.php](#ddevdrupalassetssettingslocalphp)
 - [Options](#options)
+  * [Caches enabled](#caches-enabled)
   * [Close to production](#close-to-production)
 
 <!-- tocstop -->
@@ -56,8 +57,6 @@ See [options](#options) below.
 
 ## Options
 
-### Close to production
-
 By default, this add-on is configured to put drupal in a very dev oriented mode:
 
 - No preprocessing
@@ -66,10 +65,35 @@ By default, this add-on is configured to put drupal in a very dev oriented mode:
   debugging
 - Assumes a `development` named config split that should be enabled.
 
-A quick way to not set most of the above (but still allow other defaults that
-this add-on consider improtant to be set on dev boxes regardless) is to either
-set `DDEV_DRUPAL_SETTINGS_PROD` [enviroment variable][ddev-envvars] to true or
-adding a
+### Caches enabled
+
+**The caches are disabled by default.**
+
+In case you prefer not to have this add-on disable caches and handle it
+different from how this add-on does it, you can configure either with an
+`DDEV_DRUPAL_CACHE_PRODUCTION` [enviroment variable][ddev-envvars] set to `true`
+of adding a
+[`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
+file with:
+
+```php
+<?php
+
+$ddev_drupal_cache_production = TRUE;
+```
+
+<!-- prettier-ignore -->
+> [!WARNING]
+> The boolean value of `$ddev_drupal_cache_production` will override whatever is
+> in the environment variable, allowing you to alter the functionality
+> temporarily.
+
+### Close to production
+
+Another option is to configure this add-on to keep more settings closer to
+production (but still allow other defaults that this add-on consider improtant
+to be set on dev boxes regardless) by either setting `DDEV_DRUPAL_PRODUCTION`
+[enviroment variable][ddev-envvars] to true or adding a
 [`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
 file with:
 
@@ -79,7 +103,12 @@ file with:
 ```php
 <?php
 
-$settings_dev_prod = TRUE;
+$ddev_drupal_production = TRUE;
 ```
+
+<!-- prettier-ignore -->
+> [!WARNING]
+> The boolean value of `$ddev_drupal_production` will override whatever is in
+> the environment variable, allowing you to alter the functionality temporarily.
 
 **Contributed and maintained by [@hanoii](https://github.com/hanoii)**
