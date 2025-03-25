@@ -70,7 +70,7 @@ By default, this add-on is configured to put drupal in a very dev oriented mode:
 ### Caches as production
 
 <!-- prettier-ignore -->
-> [!IMPORTANT]
+> [!NOTE]
 > All drupal caches caches are disabled by default.
 
 In case you prefer not to have this add-on disable caches and handle it
@@ -87,7 +87,7 @@ $ddev_drupal_cache_production = TRUE;
 ```
 
 <!-- prettier-ignore -->
-> [!WARNING]
+> [!IMPORTANT]
 > The boolean value of `$ddev_drupal_cache_production` will override whatever is
 > in the environment variable, allowing you to alter the functionality
 > temporarily.
@@ -108,7 +108,7 @@ This option **would do** the following:
   defaults on development modules' settings.
 
 <!-- prettier-ignore -->
-> [!WARNING]
+> [!CAUTION]
 > Make sure that your local environment has their own sensible defaults by
 > having your own dev settings as needed for each project.
 
@@ -124,7 +124,7 @@ $ddev_drupal_production = TRUE;
 ```
 
 <!-- prettier-ignore -->
-> [!WARNING]
+> [!IMPORTANT]
 > The boolean value of `$ddev_drupal_production` will override whatever is in
 > the environment variable, allowing you to alter the functionality temporarily.
 
