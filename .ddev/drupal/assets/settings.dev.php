@@ -8,6 +8,9 @@ use Composer\Semver\Comparator;
  * and example.settings.local.php
  */
 
+// Load DDEV Drupal add-on autoloader.
+require_once '/var/www/html/.ddev/drupal/autoload.php';
+
 // This include is only to add php code that would alter the behavior of this
 // settings file.
 // i.e. $settings_dev_prod = TRUE;
@@ -65,6 +68,10 @@ if (!$ddev_drupal_production && !$ddev_drupal_cache_production) {
   $settings['container_yamls'][] =  '/var/www/html/.ddev/drupal/assets/dev.services.yml';
 
   // Disabling caches
+  // Note: You also have the option to use the cache.backend.database.null cache
+  // backend that comes with this add-on. The main difference is that it allows
+  // storage but all gets are misses. This can be useful to debug cache entries
+  // as you have the storage to look at was was cached.
   $settings['cache']['bins']['render'] = 'cache.backend.null';
   $settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
   $settings['cache']['bins']['page'] = 'cache.backend.null';

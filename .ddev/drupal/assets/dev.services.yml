@@ -13,3 +13,8 @@ parameters:
 services:
   cache.backend.null:
     class: Drupal\Core\Cache\NullBackendFactory
+  # This creates a special backend that returns no cache but stores it in the database.
+  # Useful for debugging cache contexts and tags without having to rebuild the cache.
+  cache.backend.database.null:
+    class: Ddev\Drupal\Cache\DatabaseNullBackendFactory
+    arguments: ['@database', '@cache_tags.invalidator.checksum', '@settings', '@serialization.phpserialize', '@datetime.time']
