@@ -89,7 +89,7 @@ if [[ "$download" == "true"  ]]; then
   sh -c " \
     { \
       { \
-        drush $verbose -n ${alias} sql-dump --gzip --result-file=/tmp/${sql_filename}; \
+        drush $verbose -n ${alias} sql-dump --structure-tables-list=cache\*,watchdog --gzip --result-file=/tmp/${sql_filename}; \
         ret=\$?; \
         echo \$ret > /tmp/db-pull-drush.ret; \
       } \
