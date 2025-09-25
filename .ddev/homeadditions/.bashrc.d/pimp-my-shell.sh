@@ -9,8 +9,11 @@ export SHELL
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
-      *) return;;
+      *) export DDEV_PIMP_MY_SHELL_NON_INTERACTIVE=true; return;;
 esac
+
+unset DDEV_PIMP_MY_SHELL_NON_INTERACTIVE
+export DDEV_PIMP_MY_SHELL_INTERACTIVE=true
 
 # ahoy
 COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
@@ -40,7 +43,7 @@ function set_win_title(){
   # Shortening $PWD
   # /var/www/html -> /v/w/html
   local short_pwd=$(echo "$PWD" | sed 's/\([^\/]\)[^\/]*\//\1\//g')
-  echo -ne "\033]0;$@$DDEV_PROJECT/ddev: $short_pwd\007"
+  echo -ne "\033]0;$@$PIMP_MY_SHELL_TITLE_PREFIX$DDEV_PROJECT/ddev: $short_pwd\007"
 }
 starship_precmd_user_func="set_win_title"
 trap "set_win_title \"\${BASH_COMMAND} - \"" DEBUG

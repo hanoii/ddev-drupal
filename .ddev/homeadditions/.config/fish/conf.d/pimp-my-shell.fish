@@ -33,7 +33,12 @@ if test -f /mnt/ddev-global-cache/fishhistory/$HOSTNAME/fish_history
 end
 
 function fish_title
-  set --local title "$DDEV_PROJECT/ddev: "(fish_prompt_pwd_dir_length=1 prompt_pwd)
+  set --local title (
+    printf "%s%s/ddev: %s" \
+      "$PIMP_MY_SHELL_TITLE_PREFIX" \
+      "$DDEV_PROJECT" \
+      (fish_prompt_pwd_dir_length=1 prompt_pwd)
+  )
   if count $argv > /dev/null
     set title "$argv - $title"
   end
@@ -44,6 +49,8 @@ end
 set -x IS_FISH_SHELL 1
 if status --is-interactive
   set -x IS_FISH_INTERACTIVE_SHELL 1
+  set -e DDEV_PIMP_MY_SHELL_NON_INTERACTIVE
+  set -x DDEV_PIMP_MY_SHELL_INTERACTIVE true
 end
 
 # eza aliases
@@ -57,7 +64,7 @@ function ll --wraps eza --description "eza -la --icons --octal-permissions --gro
 end
 
 # rust
-source ~/.cargo/env.fish
+fish_add_path ~/.cargo/bin
 
 # delta
 git config --global core.pager delta
