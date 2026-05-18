@@ -1,4 +1,5 @@
 <?php
+// #ddev-generated
 
 namespace Ddev\Drupal\Cache;
 

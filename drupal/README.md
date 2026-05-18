@@ -1,3 +1,4 @@
+<!-- #ddev-generated -->
 # DDEV Drupal Add-on: DatabaseNullBackend
 
 This DDEV add-on provides a custom cache backend that stores cache data in the database but always returns cache misses (like NullBackend). This is useful for debugging cache contexts and tags without having to rebuild the cache constantly.
