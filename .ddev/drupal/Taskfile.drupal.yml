@@ -1,7 +1,8 @@
 #ddev-generated
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
-
 version: '3'
+
+silent: true
 
 vars:
   WEBROOT: ""
