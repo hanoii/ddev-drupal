@@ -14,14 +14,7 @@ tasks:
     vars:
       WR: '{{if .WEBROOT}}{{trimSuffix .WEBROOT "/"}}/{{end}}'
     cmds:
-      - |
-        php -r '$composer = json_decode(file_get_contents("{{.WR}}composer.json"), TRUE); $deps = array_merge($composer["require"] ?? [], $composer["require-dev"] ?? []); foreach (array_keys($deps) as $package) { if (str_starts_with($package, "drupal/")) { $module = substr($package, strlen("drupal/")); if (!str_starts_with($module, "core")) { echo $module, PHP_EOL; } } }' | while read module; do
-          if grep -rql "$module" {{.WR}}{{.CONFIG_DIR}} --include="*.yml" 2>/dev/null; then
-            echo "✅ Being used: $module"
-          else
-            echo "❌ Not being used: $module"
-          fi
-        done
+      - .ddev/drupal/scripts/composer-needed.sh "{{.WR}}" "{{.CONFIG_DIR}}"
 
   drush:uli:
     desc: A fancier drush:uli for our own ahoy commands
