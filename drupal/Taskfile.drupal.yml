@@ -1,0 +1,28 @@
+#ddev-generated
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  WEBROOT: ""
+  CONFIG_DIR: config
+
+tasks:
+  composer:needed:
+    desc: Report which composer drupal modules are active in config
+    vars:
+      WR: '{{if .WEBROOT}}{{trimSuffix .WEBROOT "/"}}/{{end}}'
+    cmds:
+      - |
+        grep drupal/ {{.WR}}composer.json | perl -pe 's/.*drupal\///g; s/":.*//g' | grep -ve "^core" | while read module; do
+          if grep -rql "$module" {{.WR}}{{.CONFIG_DIR}} --include="*.yml" 2>/dev/null; then
+            echo "✅ Being used: $module"
+          else
+            echo "❌ Not being used: $module"
+          fi
+        done
+
+  drush:uli:
+    desc: A fancier drush:uli for our own ahoy commands
+    cmds:
+      - .ddev/drupal/scripts/drush-uli.sh {{.CLI_ARGS}}
