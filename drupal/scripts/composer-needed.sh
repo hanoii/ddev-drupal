@@ -2,13 +2,17 @@
 #ddev-generated
 set -e -o pipefail
 
-webroot="${1:-}"
+composer_root="${1:-}"
 config_dir="${2:-config}"
 
-webroot="${webroot%/}"
-if [ -n "$webroot" ]; then
-  composer_file="$webroot/composer.json"
-  config_path="$webroot/$config_dir"
+composer_root="${composer_root%/}"
+if [ "$composer_root" = "." ]; then
+  composer_root=""
+fi
+
+if [ -n "$composer_root" ]; then
+  composer_file="$composer_root/composer.json"
+  config_path="$composer_root/$config_dir"
 else
   composer_file="composer.json"
   config_path="$config_dir"
