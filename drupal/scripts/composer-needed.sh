@@ -34,7 +34,7 @@ unused_require_modules=()
 unused_dev_modules=()
 
 while IFS=: read -r dependency_type module; do
-  if grep -rFql --include="*.yml" -- "$module" "$config_path" 2>/dev/null; then
+  if grep -rFqlw --include="*.yml" -- "$module" "$config_path" 2>/dev/null; then
     if [ "$dependency_type" = "require-dev" ]; then
       active_dev_modules+=("$module")
     else
