@@ -2,13 +2,17 @@
 #ddev-generated
 set -e -o pipefail
 
-webroot="${1:-}"
+composer_root="${1:-}"
 config_dir="${2:-config}"
 
-webroot="${webroot%/}"
-if [ -n "$webroot" ]; then
-  composer_file="$webroot/composer.json"
-  config_path="$webroot/$config_dir"
+composer_root="${composer_root%/}"
+if [ "$composer_root" = "." ]; then
+  composer_root=""
+fi
+
+if [ -n "$composer_root" ]; then
+  composer_file="$composer_root/composer.json"
+  config_path="$composer_root/$config_dir"
 else
   composer_file="composer.json"
   config_path="$config_dir"
@@ -29,8 +33,30 @@ active_dev_modules=()
 unused_require_modules=()
 unused_dev_modules=()
 
+enabled_modules_file="$(mktemp)"
+trap 'rm -f "$enabled_modules_file"' EXIT
+
+extract_extension_sections() {
+  awk '
+    /^(module|theme):/ { in_section = 1; next }
+    in_section && /^[^ ]/ { in_section = 0 }
+    in_section && /^  [a-zA-Z0-9_]+:/ {
+      line = $0
+      sub(/^  /, "", line)
+      sub(/:.*$/, "", line)
+      print line
+    }
+  ' "$1"
+}
+
+while IFS= read -r -d '' extension_file; do
+  extract_extension_sections "$extension_file" >> "$enabled_modules_file"
+done < <(find "$config_path" -type f \( -name 'core.extension.yml' -o -name 'config_split.config_split.*.yml' \) -print0)
+
+sort -u -o "$enabled_modules_file" "$enabled_modules_file"
+
 while IFS=: read -r dependency_type module; do
-  if grep -rFql --include="*.yml" -- "$module" "$config_path" 2>/dev/null; then
+  if grep -Fxq -- "$module" "$enabled_modules_file"; then
     if [ "$dependency_type" = "require-dev" ]; then
       active_dev_modules+=("$module")
     else

@@ -5,16 +5,20 @@ version: '3'
 silent: true
 
 vars:
-  WEBROOT: ""
+  COMPOSER_ROOT: ""
+  WEB_ROOT: web
   CONFIG_DIR: config
 
 tasks:
+  composer:reset:
+    desc: Remove Composer-installed dependencies so composer install starts clean
+    cmds:
+      - .ddev/drupal/scripts/composer-reset.sh "{{.COMPOSER_ROOT}}" "{{.WEB_ROOT}}"
+
   composer:needed:
     desc: Report which composer drupal modules are active in config
-    vars:
-      WR: '{{if .WEBROOT}}{{trimSuffix .WEBROOT "/"}}/{{end}}'
     cmds:
-      - .ddev/drupal/scripts/composer-needed.sh "{{.WR}}" "{{.CONFIG_DIR}}"
+      - .ddev/drupal/scripts/composer-needed.sh "{{.COMPOSER_ROOT}}" "{{.CONFIG_DIR}}"
 
   drush:uli:
     desc: A fancier drush:uli for our own ahoy commands
