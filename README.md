@@ -9,11 +9,12 @@
 
 - [What is ddev-drupal?](#what-is-ddev-drupal)
 - [Features](#features)
-  * [settings.dev.php](#settingsdevphp)
-  * [.ddev/drupal/assets/settings.local.php](#ddevdrupalassetssettingslocalphp)
+  * [settings.ddev-drupal.php](#settingsddev-drupalphp)
 - [Options](#options)
-  * [Caches as production](#caches-as-production)
-  * [Close to production](#close-to-production)
+  * [Presets](#presets)
+  * [The config file](#the-config-file)
+  * [Environment variable](#environment-variable)
+  * [Upgrading from earlier versions](#upgrading-from-earlier-versions)
 
 <!-- tocstop -->
 
@@ -24,110 +25,123 @@ with Drupal on ddev.
 
 ## Features
 
-### settings.dev.php
+### settings.ddev-drupal.php
 
-A common/general settings.dev.php files that any drupal site can include by
+A common/general development settings file that any drupal site can include by
 adding it to their main settings.php:
 
 ```php
-// include for settings managed by hanoii/ddev-drupal.
-$is_ddev_project = !empty($_ENV['IS_DDEV_PROJECT']) && $_ENV['IS_DDEV_PROJECT'] == "true";
-if ($is_ddev_project) {
-  $ddev_dev_settings = '/var/www/html/.ddev/drupal/assets/settings.dev.php';
-  if (is_readable($ddev_dev_settings)) {
-    require $ddev_dev_settings;
-  }
-
-  // Additionally, look for a project-wide settings.dev.php site settings directory.
-  $project_dev_settings = $app_root . '/' . $site_path . '/settings.dev.php';
-  if (is_readable($project_dev_settings)) {
-    require $project_dev_settings;
+// Include settings managed by hanoii/ddev-drupal.
+if (getenv('IS_DDEV_PROJECT') === 'true') {
+  $ddev_drupal_settings = '/var/www/html/.ddev/drupal/assets/settings.ddev-drupal.php';
+  if (is_readable($ddev_drupal_settings)) {
+    require $ddev_drupal_settings;
   }
 }
 ```
 
-### .ddev/drupal/assets/settings.local.php
-
-The settings.dev.php file of this add-on also includes, if present, a
-`.ddev/drupal/assets/settings.local.php` before everything else.
-
-This files allows to configure things that will affect some defaults of this
-add-on.
-
-See [options](#options) below.
-
-This file is _gitignored_.
+Anything included after it can override what it sets, and can read the resolved
+[options](#options) from `$ddev_drupal` (for example `$ddev_drupal['preset']`).
+The exception is Twig debug, applied while the container is built: use the
+`twig_debug` option for it.
 
 ## Options
 
-By default, this add-on is configured to put drupal in a very dev oriented mode:
+Some settings are always applied:
 
-- No preprocessing
-- No cache whatsoever
-- Includes a `dev.services.yml` file that disables twig caching and add some
-  debugging
-- Assumes a `development` named config split that should be enabled.
+- Assertions (on PHP < 8.3, otherwise set `zend.assertions` in php.ini), verbose
+  error logging, `extension_discovery_scan_tests`.
+- Any trusted host, `skip_permissions_hardening`.
+- A local `hash_salt` and `allow_insecure_derivatives` for images.
+- `/tmp` as temporary path, files in `sites/default/files` and private files in
+  `sites/default/files/private`.
+- The `cache.backend.null` and `cache.backend.database.null` cache backends.
 
-### Caches as production
+The rest is driven by options:
 
-<!-- prettier-ignore -->
-> [!NOTE]
-> All drupal caches caches are disabled by default.
+| Option                 | Values                      | What it does                                                                                                                   |
+| ---------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `preprocess`           | `true`, `false`             | CSS/JS aggregation.                                                                                                            |
+| `cache`                | `none`, `db_null`, `normal` | Backend of the `render`, `dynamic_page_cache` and `page` bins. `db_null` stores entries in the database but never serves them. |
+| `twig_debug`           | `true`, `false`             | Twig debug, auto reload and no Twig cache.                                                                                     |
+| `cacheability_headers` | `true`, `false`             | `X-Drupal-Cache-Tags` / `X-Drupal-Cache-Contexts` debug headers.                                                               |
+| `config_split`         | a split id, `false`         | Config split forced enabled.                                                                                                   |
+| `stage_file_proxy`     | `true`, `false`             | Stage File Proxy hotlinking.                                                                                                   |
 
-In case you prefer not to have this add-on disable caches and handle it
-different from how this add-on does it, you can configure either with an
-`DDEV_DRUPAL_CACHE_PRODUCTION` [enviroment variable][ddev-envvars] set to `true`
-or adding a
-[`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
-file with:
+### Presets
 
-```php
-<?php
+Every option gets its value from a preset, `dev` by default, and can then be
+overridden one by one in [the config file](#the-config-file).
 
-$ddev_drupal_cache_production = TRUE;
-```
-
-<!-- prettier-ignore -->
-> [!IMPORTANT]
-> The boolean value of `$ddev_drupal_cache_production` will override whatever is
-> in the environment variable, allowing you to alter the functionality
-> temporarily.
-
-### Close to production
-
-Another option is to configure this add-on to be less agressive in development
-settings and allow a more production-like local enviornment, **but still allow
-other defaults that this add-on consider improtant to be set on dev boxes
-regardless**.
-
-This option **would do** the following:
-
-- Avoid disabling CSS/JS preprocessing.
-- Avoid disabling caches (same as per the
-  [option above](#caches-as-production)).
-- Avoid enabling the `development` config split as well as any opinionated
-  defaults on development modules' settings.
+| Option                 | `dev`         | `cache`       | `prod`   |
+| ---------------------- | ------------- | ------------- | -------- |
+| `preprocess`           | `false`       | `false`       | `true`   |
+| `cache`                | `none`        | `normal`      | `normal` |
+| `twig_debug`           | `true`        | `false`       | `false`  |
+| `cacheability_headers` | `false`       | `false`       | `false`  |
+| `config_split`         | `development` | `development` | `false`  |
+| `stage_file_proxy`     | `true`        | `true`        | `false`  |
 
 <!-- prettier-ignore -->
 > [!CAUTION]
-> Make sure that your local environment has their own sensible defaults by
-> having your own dev settings as needed for each project.
+> `prod` leaves only the always applied settings. Anything else a project
+> needs locally is up to the project.
 
-You can do that by either setting `DDEV_DRUPAL_PRODUCTION` [enviroment
-variable][ddev-envvars] to `true` or adding a
-[`.ddev/drupal/assets/settings.local.php`](#ddevdrupalassetssettingslocalphp)
-file with:
+### The config file
+
+Overrides go in `sites/<site>/settings.ddev-drupal-config.php`, next to your
+`settings.php`. Copy
+[`.ddev/drupal/assets/example.settings.ddev-drupal-config.php`](drupal/assets/example.settings.ddev-drupal-config.php),
+which documents every option, commented out, and uncomment what you need. Any
+option left out follows the preset:
 
 ```php
 <?php
 
-$ddev_drupal_production = TRUE;
+// Caches on, but keep twig debug.
+return [
+  'preset' => 'cache',
+  'twig_debug' => TRUE,
+];
 ```
 
-<!-- prettier-ignore -->
-> [!IMPORTANT]
-> The boolean value of `$ddev_drupal_production` will override whatever is in
-> the environment variable, allowing you to alter the functionality temporarily.
+Changes apply on the next request, no restart or cache rebuild needed. With
+caches on, pages cached before the change are still served until they expire or
+the next `drush cr`. An unknown option or an invalid value stops with an error
+naming it.
+
+The file holds personal settings and should not be committed. Add it to your
+`.gitignore`, for example:
+
+```gitignore
+/web/sites/*/settings.ddev-drupal-config.php
+```
+
+### Environment variable
+
+`DDEV_DRUPAL_PRESET` sets the base preset, for instance for a whole team from a
+committed `.ddev/config.*.yaml`, or permanently for yourself from
+`.ddev/config.local.yaml`. Set it through `web_environment` ([environment
+variables][ddev-envvars]); it needs a `ddev restart`. The config file still wins
+over it.
+
+### Upgrading from earlier versions
+
+Everything that worked before still works, but is deprecated:
+
+- The add-on's `.ddev/drupal/assets/settings.dev.php` is now a one-line shim
+  that requires `settings.ddev-drupal.php`. Point your `settings.php` to the new
+  name.
+- `.ddev/drupal/assets/settings.local.php` setting `$ddev_drupal_production` /
+  `$ddev_drupal_cache_production` is still read: production maps to the `prod`
+  preset, cache production to `cache`. Move it to a `'preset'` in
+  [the config file](#the-config-file) and delete the old file.
+- The `DDEV_DRUPAL_PRODUCTION` / `DDEV_DRUPAL_CACHE_PRODUCTION` environment
+  variables map to the same presets, now read as real booleans (`false` is
+  false). Use `DDEV_DRUPAL_PRESET` instead.
+- `dev.services.yml` is no longer loaded. Its services are now always available
+  from `services/backends.services.yml`, so `cache.backend.database.null` can be
+  used even with caches on.
 
 [ddev-envvars]:
   https://ddev.readthedocs.io/en/stable/users/extend/customization-extendibility/#environment-variables-for-containers-and-services

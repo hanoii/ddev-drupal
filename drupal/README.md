@@ -20,16 +20,26 @@ This allows you to:
 - `src/Cache/DatabaseNullBackendFactory.php` - Factory class that creates the cache backends
 - `src/Cache/DatabaseNullBackend.php` - Backend class that stores but doesn't retrieve
 - `autoload.php` - Autoloader for the custom namespace
-- `assets/dev.services.yml` - Service definition for the cache backend
-- `assets/settings.dev.php` - Development settings that include the autoloader
+- `assets/services/backends.services.yml` - Service definition for the cache backend
+- `assets/settings.ddev-drupal.php` - Development settings that include the autoloader and the services file
 
 ## Usage
 
-The cache backend is automatically available in development environments as `cache.backend.database.null`.
+The cache backend is always available as `cache.backend.database.null` once `settings.ddev-drupal.php` is included, whatever the preset.
+
+### Use it for the render, dynamic page and page bins
+
+In `sites/<site>/settings.ddev-drupal-config.php`:
+
+```php
+return [
+  'cache' => 'db_null',
+];
+```
 
 ### Configure specific cache bins
 
-To use this backend for specific cache bins, add to your `settings.php` or `settings.local.php`:
+To use this backend for other cache bins, add to your project's own settings file included after `settings.ddev-drupal.php`:
 
 ```php
 // Use for specific cache bins
@@ -49,14 +59,6 @@ $settings['cache']['default'] = 'cache.backend.database.null';
 ## Namespace
 
 The classes use the `Ddev\Drupal\Cache` namespace to avoid conflicts with Drupal core classes while still being able to extend them.
-
-## Testing
-
-Run the test script to verify the installation:
-
-```bash
-php .ddev/drupal/test_cache.php
-```
 
 ## How it works
 

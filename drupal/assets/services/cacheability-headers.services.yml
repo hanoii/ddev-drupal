@@ -1,0 +1,4 @@
+# #ddev-generated
+# Loaded when the 'cacheability_headers' option is on.
+parameters:
+  http.response.debug_cacheability_headers: true
