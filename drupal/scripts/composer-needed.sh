@@ -164,7 +164,9 @@ foreach (["require", "require-dev"] as $section) {
   foreach (array_keys($composer[$section] ?? []) as $package) {
     if (str_starts_with($package, "drupal/")) {
       $module = substr($package, strlen("drupal/"));
-      if (!str_starts_with($module, "core")) {
+      // drupal/core and its drupal/core-* tooling packages, not modules
+      // that merely start with "core".
+      if ($module !== "core" && !str_starts_with($module, "core-")) {
         echo $section, ":", $module, PHP_EOL;
       }
     }
