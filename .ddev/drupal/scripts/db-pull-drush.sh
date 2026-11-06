@@ -2,17 +2,13 @@
 #ddev-generated
 set -e -o pipefail
 
-if ! ssh-add -l >/dev/null; then
-  gum log --level fatal Please run \'ddev auth ssh\' from your host before running this command.
-  exit 1
-fi
-
 USAGE=$(cat << EOM
 Usage: ${DDEV_DRUPAL_HELP_CMD-$0} [options]
 
   -h                This help text.
   -a ALIAS          Required! The remote drush alias (likely ssh) from where the database will be dumped. i.e. @live
   -n                Do not download, expect the dump to be already downloaded.
+  -d                Download only, do not import the dump.
   -f FILE           Alternatively, provide a gzip'ed dump to import. Implies -n.
   -o                Import only, do not run post-import-db hooks.
   -v                Add -vvvv to drush commands
@@ -24,12 +20,13 @@ function print_help() {
 }
 
 download=true
+download_only=
 file=
 post_import=true
 alias=
 verbose=
 
-while getopts ":hvnoa:f:" option; do
+while getopts ":hvnoda:f:" option; do
   case ${option} in
     v)
       verbose="-vvvv"
@@ -43,6 +40,9 @@ while getopts ":hvnoa:f:" option; do
       ;;
     n)
       download=
+      ;;
+    d)
+      download_only=true
       ;;
     f)
       download=
@@ -82,33 +82,60 @@ if [[ -n $file ]]; then
 fi
 
 if [[ "$download" == "true"  ]]; then
+  if ! ssh-add -l >/dev/null; then
+    gum log --level fatal Please run \'ddev auth ssh\' from your host before running this command.
+    exit 1
+  fi
+
+  # A unique remote name, so that concurrent pulls don't clobber each other,
+  # removed once downloaded so no production data is left behind in /tmp.
+  remote_sql="/tmp/${sql_filename%.sql}-$(date +%Y%m%d%H%M%S)-$$.sql"
+  remote_sql_gz="${remote_sql}.gz"
+  # The exit code of the dump; its appearance also ends the progress loop, so
+  # it must not exist beforehand.
+  ret_dir=$(mktemp -d)
+  ret_file="${ret_dir}/ret"
+  remote_cleanup() {
+    rm -rf "${ret_dir}"
+    if ! drush ${alias} ssh "rm -f ${remote_sql_gz}" >/dev/null 2>&1; then
+      gum log --level warn -- Could not remove ${remote_sql_gz} on ${alias}, please remove it by hand.
+    fi
+  }
+  trap remote_cleanup EXIT
+
   gum log --level info -- Dumping remote database on ${alias}...
   gum log --level info -- A progress of an increasing sql dump file size should appear, if not there might be connection issues, try adding -v ...
-  drush $verbose ${alias} ssh "rm -f /tmp/${sql_filename_gz}"
-  rm -f /tmp/db-pull-drush.ret
   sh -c " \
     { \
       { \
-        drush $verbose -n ${alias} sql-dump --structure-tables-list=cache\*,watchdog --gzip --result-file=/tmp/${sql_filename}; \
+        drush $verbose -n ${alias} sql-dump --structure-tables-list=cache\*,watchdog --gzip --result-file=${remote_sql}; \
         ret=\$?; \
-        echo \$ret > /tmp/db-pull-drush.ret; \
+        echo \$ret > ${ret_file}; \
       } \
       | \
       { \
-        while [ ! -f /tmp/db-pull-drush.ret ]; do \
-          drush ${alias} ssh '[ -f /tmp/${sql_filename_gz} ] && du -hs /tmp/${sql_filename_gz} || true'; \
+        while [ ! -f ${ret_file} ]; do \
+          drush ${alias} ssh '[ -f ${remote_sql_gz} ] && du -hs ${remote_sql_gz} || true'; \
           sleep 2; \
           done; \
       }; \
-      exit \$(cat /tmp/db-pull-drush.ret); \
+      exit \$(cat ${ret_file}); \
     } \
     "
-    gum log --level info Downloading remote database from ${alias} to ${sql_filename_gz}...
-  drush $verbose rsync ${alias}:/tmp/${sql_filename_gz} . -y -- --delete
+  gum log --level info Downloading remote database from ${alias} to ${sql_filename_gz}...
+  drush $verbose rsync ${alias}:${remote_sql_gz} . -y
+  mv -f "$(basename "${remote_sql_gz}")" "${sql_filename_gz}"
+  remote_cleanup
+  trap - EXIT
+fi
+
+if [[ -n $download_only ]]; then
+  gum log --level info -- Download only, skipping import. Dump available at ${sql_filename_gz}.
+  exit 0
 fi
 
 if [[ ! -f ${sql_filename_gz} ]]; then
-  gum log --level fatal -- ${sql_filename}.gz not found! Run \'${DDEV_DRUPAL_HELP_CMD-$0}\' it without \'-n\'
+  gum log --level fatal -- ${sql_filename_gz} not found! Run \'${DDEV_DRUPAL_HELP_CMD-$0}\' it without \'-n\'
   exit 1
 fi
 

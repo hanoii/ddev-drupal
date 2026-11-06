@@ -2,7 +2,7 @@
 #ddev-generated
 set -e -o pipefail
 
-if [[ "$DDEV_PROJECT_TYPE" == *"drupal"* ]] || [[ "$DDEV_BROOKSDIGITAL_PROJECT_TYPE" == *"drupal"* ]]; then
+if [[ "$DDEV_PROJECT_TYPE" == *"drupal"* ]] || [[ "$DDEV_PIMP_MY_SHELL_PROJECT_TYPE" == *"drupal"* ]]; then
   set +o pipefail
   deleted_libraries=$(git status | grep -E 'web/libraries/.*?/' | grep deleted | perl -p -e 's|.*web/libraries/(.*?)/.*|web/libraries/\1|' | sort | uniq | xargs ls 2>&1 | grep cannot | perl -p -e "s|.*'web/(libraries/.*?)'.*|\1|" | xargs)
   set -o pipefail
