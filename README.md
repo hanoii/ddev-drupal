@@ -32,6 +32,13 @@ adding it to their main settings.php:
 
 ```php
 // Include settings managed by hanoii/ddev-drupal.
+//
+// What it sets is driven by options, from the 'dev' preset by default. To
+// change them for this site, copy
+// .ddev/drupal/assets/example.settings.ddev-drupal-config.php next to this
+// file as settings.ddev-drupal-config.php (not committed) and uncomment what
+// you need. It is read on every request, no need to include it here.
+// See https://github.com/hanoii/ddev-drupal#options
 if (getenv('IS_DDEV_PROJECT') === 'true') {
   $ddev_drupal_settings = '/var/www/html/.ddev/drupal/assets/settings.ddev-drupal.php';
   if (is_readable($ddev_drupal_settings)) {
