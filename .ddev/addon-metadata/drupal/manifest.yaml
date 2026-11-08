@@ -3,7 +3,7 @@ repository: .
 version: ""
 dependencies:
     - hanoii/ddev-pimp-my-shell
-install_date: "2026-11-07T21:15:03-03:00"
+install_date: "2026-11-08T18:23:07-03:00"
 project_files:
     - pimp-my-shell/
     - drupal/
