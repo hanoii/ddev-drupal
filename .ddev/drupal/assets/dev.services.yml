@@ -1,8 +1,7 @@
 # #ddev-generated
-# Local development services.
-#
-# We are not using development.services.yml just in case we need to tweak this
-# for our purposes.
+# DEPRECATED: settings.ddev-drupal.php no longer loads this file. It is kept
+# only for projects that reference it directly. Use the files in services/
+# instead, driven by the options in settings.ddev-drupal-config.php.
 #
 parameters:
   http.response.debug_cacheability_headers: false

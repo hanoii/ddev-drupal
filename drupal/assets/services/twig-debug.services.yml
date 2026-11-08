@@ -1,0 +1,7 @@
+# #ddev-generated
+# Loaded when the 'twig_debug' option is on. Twig debug itself is set by
+# \Ddev\Drupal\TwigDebugServiceProvider, which only changes some keys of
+# twig.config. This file is still listed in container_yamls because Drupal
+# keys its cached container on that list, not on service providers: toggling
+# the option then rebuilds the container on its own.
+services: {}

@@ -50,7 +50,7 @@ drupal_path() {
 }
 
 validate_relative_path "COMPOSER_ROOT" "$composer_root"
-validate_relative_path "WR" "$drupal_root"
+validate_relative_path "WEB_ROOT" "$drupal_root"
 
 composer_file="$(join_path "$composer_root" "composer.json")"
 if [ ! -f "$composer_file" ]; then

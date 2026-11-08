@@ -3,7 +3,7 @@ project_files:
   - pimp-my-shell/
   - drupal/
 dependencies:
-  - pimp-my-shell
+  - hanoii/ddev-pimp-my-shell
 post_install_actions:
 removal_actions:
 yaml_read_files:

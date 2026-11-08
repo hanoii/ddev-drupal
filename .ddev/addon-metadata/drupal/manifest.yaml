@@ -2,8 +2,8 @@ name: drupal
 repository: .
 version: ""
 dependencies:
-    - pimp-my-shell
-install_date: "2026-05-27T18:00:07-03:00"
+    - hanoii/ddev-pimp-my-shell
+install_date: "2026-11-07T21:15:03-03:00"
 project_files:
     - pimp-my-shell/
     - drupal/
