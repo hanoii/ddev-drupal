@@ -127,7 +127,9 @@ over it.
 
 ### Upgrading from earlier versions
 
-Everything that worked before still works, but is deprecated:
+Everything that worked before still works, but is deprecated. `ddev add-on get`
+warns about each of these it finds in the project (this add-on needs DDEV
+v1.24.8 or later):
 
 - The add-on's `.ddev/drupal/assets/settings.dev.php` is now a one-line shim
   that requires `settings.ddev-drupal.php`. Point your `settings.php` to the new

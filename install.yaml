@@ -4,6 +4,41 @@ project_files:
   - drupal/
 dependencies:
   - hanoii/ddev-pimp-my-shell
+ddev_version_constraint: '>= v1.24.8'
 post_install_actions:
+  - |
+    #ddev-warning-exit-code: 2
+    #ddev-description:Check for deprecated hanoii/ddev-drupal settings
+    found=
+    warn() {
+      echo "Deprecated: $*"
+      found=1
+    }
+    if [ -f "${DDEV_APPROOT}/.ddev/drupal/assets/settings.local.php" ]; then
+      warn ".ddev/drupal/assets/settings.local.php: set a 'preset' in sites/<site>/settings.ddev-drupal-config.php instead, then delete it."
+    fi
+    for f in "${DDEV_APPROOT}/${DDEV_DOCROOT:+${DDEV_DOCROOT}/}"sites/*/settings*.php; do
+      [ -f "$f" ] || continue
+      rel="${f#"${DDEV_APPROOT}"/}"
+      if grep -q '\.ddev/drupal/assets/settings\.dev\.php' "$f"; then
+        warn "$rel requires .ddev/drupal/assets/settings.dev.php: require settings.ddev-drupal.php instead."
+      fi
+      if grep -q '\.ddev/drupal/assets/dev\.services\.yml' "$f"; then
+        warn "$rel loads .ddev/drupal/assets/dev.services.yml: use the add-on's options instead."
+      fi
+      if grep -qE '\$ddev_drupal_(cache_)?production[[:space:]]*=' "$f"; then
+        warn "$rel sets \$ddev_drupal_production or \$ddev_drupal_cache_production: set a 'preset' in settings.ddev-drupal-config.php instead."
+      fi
+    done
+    for f in "${DDEV_APPROOT}"/.ddev/config*.yaml "${DDEV_APPROOT}"/.ddev/.env*; do
+      [ -f "$f" ] || continue
+      if grep -qE 'DDEV_DRUPAL_(CACHE_)?PRODUCTION' "$f"; then
+        warn ".ddev/${f##*/} sets DDEV_DRUPAL_PRODUCTION or DDEV_DRUPAL_CACHE_PRODUCTION: use DDEV_DRUPAL_PRESET instead."
+      fi
+    done
+    if [ -n "$found" ]; then
+      echo "These still work for now. See https://github.com/hanoii/ddev-drupal#upgrading-from-earlier-versions"
+      exit 2
+    fi
 removal_actions:
 yaml_read_files:

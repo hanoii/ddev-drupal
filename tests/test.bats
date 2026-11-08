@@ -7,6 +7,15 @@ setup() {
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1 || true
   rm -rf ${TESTDIR}
   mkdir -p ${TESTDIR}
+
+  # Install from a copy of what git would ship (tracked and new files), not
+  # from the checkout: it may hold ignored local files, like a legacy
+  # drupal/assets/settings.local.php.
+  export ADDON_DIR="${TESTDIR}-addon"
+  rm -rf ${ADDON_DIR}
+  mkdir -p ${ADDON_DIR}
+  git -C "${DIR}" ls-files -z --cached --others --exclude-standard | (cd "${DIR}" && xargs -0 tar -cf -) | tar -xf - -C "${ADDON_DIR}"
+
   cd "${TESTDIR}"
 
   # One site directory per scenario, written before 'ddev start' so they are
@@ -51,14 +60,19 @@ teardown() {
   set -eu -o pipefail
   cd ${TESTDIR} || ( printf "unable to cd to ${TESTDIR}\n" && exit 1 )
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
-  [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR}
+  [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR} ${TESTDIR}-addon
 }
 
 @test "install from directory" {
   set -eu -o pipefail
   cd ${TESTDIR}
-  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
-  ddev add-on get ${DIR}
+  echo "# ddev add-on get ${ADDON_DIR} with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
+  out=$(ddev add-on get ${ADDON_DIR} 2>&1)
+  echo "$out"
+  echo "$out" | grep -F 'Installed drupal'
+  # A clean project has nothing deprecated to report.
+  run grep -F 'Deprecated:' <<< "$out"
+  [ "$status" -eq 1 ]
   ddev restart >/dev/null
 
   ddev exec php -l .ddev/drupal/assets/settings.ddev-drupal.php
@@ -96,4 +110,22 @@ teardown() {
 
   # A legacy variable only replaces its own env var.
   ddev exec env DDEV_DRUPAL_PRODUCTION=true PROBE_LEGACY_CACHE_PRODUCTION= php probe.php default | grep -F '"preset":"prod"'
+
+  # Reinstalling over legacy usage warns about each one but still installs.
+  cat > web/sites/default/settings.php <<'EOF'
+<?php
+require '/var/www/html/.ddev/drupal/assets/settings.dev.php';
+$settings['container_yamls'][] = '/var/www/html/.ddev/drupal/assets/dev.services.yml';
+$ddev_drupal_production = TRUE;
+EOF
+  touch .ddev/drupal/assets/settings.local.php
+  printf 'web_environment:\n  - DDEV_DRUPAL_CACHE_PRODUCTION=true\n' > .ddev/config.legacy.yaml
+  out=$(ddev add-on get ${ADDON_DIR} 2>&1)
+  echo "$out"
+  echo "$out" | grep -F 'Installed drupal'
+  echo "$out" | grep -F 'Deprecated: .ddev/drupal/assets/settings.local.php'
+  echo "$out" | grep -F 'Deprecated: web/sites/default/settings.php requires .ddev/drupal/assets/settings.dev.php'
+  echo "$out" | grep -F 'Deprecated: web/sites/default/settings.php loads .ddev/drupal/assets/dev.services.yml'
+  echo "$out" | grep -F 'Deprecated: web/sites/default/settings.php sets $ddev_drupal_production'
+  echo "$out" | grep -F 'Deprecated: .ddev/config.legacy.yaml sets DDEV_DRUPAL_PRODUCTION'
 }
