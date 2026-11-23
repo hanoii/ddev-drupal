@@ -29,6 +29,9 @@ post_install_actions:
       if grep -qE '\$ddev_drupal_(cache_)?production[[:space:]]*=' "$f"; then
         warn "$rel sets \$ddev_drupal_production or \$ddev_drupal_cache_production: set a 'preset' in settings.ddev-drupal-config.php instead."
       fi
+      if grep -vE '^[[:space:]]*(//|#|\*)' "$f" | grep -oE "'config_split'[[:space:]]*=>[[:space:]]*[^,]*" | grep -qvE "=>[[:space:]]*'(enable|disable|ignore)'"; then
+        warn "$rel sets 'config_split' to a split id or FALSE: use 'enable', 'disable' or 'ignore', and 'config_split_id' for the id."
+      fi
     done
     for f in "${DDEV_APPROOT}"/.ddev/config*.yaml "${DDEV_APPROOT}"/.ddev/.env*; do
       [ -f "$f" ] || continue

@@ -66,28 +66,30 @@ Some settings are always applied:
 
 The rest is driven by options:
 
-| Option                 | Values                      | What it does                                                                                                                   |
-| ---------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `preprocess`           | `true`, `false`             | CSS/JS aggregation.                                                                                                            |
-| `cache`                | `none`, `db_null`, `normal` | Backend of the `render`, `dynamic_page_cache` and `page` bins. `db_null` stores entries in the database but never serves them. |
-| `twig_debug`           | `true`, `false`             | Twig debug, auto reload and no Twig cache.                                                                                     |
-| `cacheability_headers` | `true`, `false`             | `X-Drupal-Cache-Tags` / `X-Drupal-Cache-Contexts` debug headers.                                                               |
-| `config_split`         | a split id, `false`         | Config split forced enabled.                                                                                                   |
-| `stage_file_proxy`     | `true`, `false`             | Stage File Proxy hotlinking.                                                                                                   |
+| Option                 | Values                        | What it does                                                                                                                   |
+| ---------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `preprocess`           | `true`, `false`               | CSS/JS aggregation.                                                                                                            |
+| `cache`                | `none`, `db_null`, `normal`   | Backend of the `render`, `dynamic_page_cache` and `page` bins. `db_null` stores entries in the database but never serves them. |
+| `twig_debug`           | `true`, `false`               | Twig debug, auto reload and no Twig cache.                                                                                     |
+| `cacheability_headers` | `true`, `false`               | `X-Drupal-Cache-Tags` / `X-Drupal-Cache-Contexts` debug headers.                                                               |
+| `config_split`         | `enable`, `disable`, `ignore` | The `config_split_id` split forced enabled, forced disabled, or left as its stored config says.                                |
+| `config_split_id`      | a split id                    | The split `config_split` acts on.                                                                                              |
+| `stage_file_proxy`     | `true`, `false`               | Stage File Proxy hotlinking.                                                                                                   |
 
 ### Presets
 
 Every option gets its value from a preset, `dev` by default, and can then be
 overridden one by one in [the config file](#the-config-file).
 
-| Option                 | `dev`         | `cache`       | `prod`   |
-| ---------------------- | ------------- | ------------- | -------- |
-| `preprocess`           | `false`       | `false`       | `true`   |
-| `cache`                | `none`        | `normal`      | `normal` |
-| `twig_debug`           | `true`        | `false`       | `false`  |
-| `cacheability_headers` | `false`       | `false`       | `false`  |
-| `config_split`         | `development` | `development` | `false`  |
-| `stage_file_proxy`     | `true`        | `true`        | `false`  |
+| Option                 | `dev`         | `cache`       | `prod`        |
+| ---------------------- | ------------- | ------------- | ------------- |
+| `preprocess`           | `false`       | `false`       | `true`        |
+| `cache`                | `none`        | `normal`      | `normal`      |
+| `twig_debug`           | `true`        | `false`       | `false`       |
+| `cacheability_headers` | `false`       | `false`       | `false`       |
+| `config_split`         | `enable`      | `enable`      | `ignore`      |
+| `config_split_id`      | `development` | `development` | `development` |
+| `stage_file_proxy`     | `true`        | `true`        | `false`       |
 
 <!-- prettier-ignore -->
 > [!CAUTION]
@@ -114,8 +116,9 @@ return [
 
 Changes apply on the next request, no restart or cache rebuild needed. With
 caches on, pages cached before the change are still served until they expire or
-the next `drush cr`. An unknown option or an invalid value stops with an error
-naming it.
+the next `drush cr`. A config split change only applies its config on the next
+`drush cim`. An unknown option or an invalid value stops with an error naming
+it.
 
 The file holds personal settings and should not be committed. Add it to your
 `.gitignore`, for example:
@@ -148,6 +151,9 @@ v1.24.8 or later):
 - The `DDEV_DRUPAL_PRODUCTION` / `DDEV_DRUPAL_CACHE_PRODUCTION` environment
   variables map to the same presets, now read as real booleans (`false` is
   false). Use `DDEV_DRUPAL_PRESET` instead.
+- `'config_split'` in the config file used to hold the split id, or `false`. A
+  split id is still read as `'enable'` with that `config_split_id`, and `false`
+  as `'ignore'`. Use the new values instead.
 - `dev.services.yml` is no longer loaded. Its services are now always available
   from `services/backends.services.yml`, so `cache.backend.database.null` can be
   used even with caches on.

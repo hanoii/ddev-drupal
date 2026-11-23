@@ -25,14 +25,15 @@ final class SettingsConfig {
   const DEFAULT_PRESET = 'dev';
 
   /**
-   * Option types: 'bool', 'string|false' or a list of allowed values.
+   * Option types: 'bool', 'machine_name' or a list of allowed values.
    */
   const SCHEMA = [
     'preprocess' => 'bool',
     'cache' => ['none', 'db_null', 'normal'],
     'twig_debug' => 'bool',
     'cacheability_headers' => 'bool',
-    'config_split' => 'string|false',
+    'config_split' => ['enable', 'disable', 'ignore'],
+    'config_split_id' => 'machine_name',
     'stage_file_proxy' => 'bool',
   ];
 
@@ -42,7 +43,8 @@ final class SettingsConfig {
       'cache' => 'none',
       'twig_debug' => TRUE,
       'cacheability_headers' => FALSE,
-      'config_split' => 'development',
+      'config_split' => 'enable',
+      'config_split_id' => 'development',
       'stage_file_proxy' => TRUE,
     ],
     'cache' => [
@@ -50,7 +52,8 @@ final class SettingsConfig {
       'cache' => 'normal',
       'twig_debug' => FALSE,
       'cacheability_headers' => FALSE,
-      'config_split' => 'development',
+      'config_split' => 'enable',
+      'config_split_id' => 'development',
       'stage_file_proxy' => TRUE,
     ],
     'prod' => [
@@ -58,7 +61,8 @@ final class SettingsConfig {
       'cache' => 'normal',
       'twig_debug' => FALSE,
       'cacheability_headers' => FALSE,
-      'config_split' => FALSE,
+      'config_split' => 'ignore',
+      'config_split_id' => 'development',
       'stage_file_proxy' => FALSE,
     ],
   ];
@@ -114,6 +118,7 @@ final class SettingsConfig {
     if (!is_array($data)) {
       throw new \UnexpectedValueException("$file must return an array.");
     }
+    $data = self::upgradeLegacy($data);
     foreach ($data as $key => $value) {
       $data[$key] = self::validate($key, $value, $file);
     }
@@ -150,11 +155,31 @@ final class SettingsConfig {
       throw new \InvalidArgumentException("$origin: '$key' must be TRUE or FALSE.");
     }
 
-    // 'string|false'.
-    if ($value === FALSE || (is_string($value) && preg_match('/^[a-z0-9_]+$/', $value))) {
+    // 'machine_name'.
+    if (is_string($value) && preg_match('/^[a-z0-9_]+$/', $value)) {
       return $value;
     }
-    throw new \InvalidArgumentException("$origin: '$key' must be a machine name or FALSE.");
+    throw new \InvalidArgumentException("$origin: '$key' must be a machine name.");
+  }
+
+  /**
+   * Maps deprecated option values to the current ones.
+   *
+   * 'config_split' used to hold the split id to enable, or FALSE to leave
+   * every split alone.
+   */
+  private static function upgradeLegacy(array $data): array {
+    if (!array_key_exists('config_split', $data) || in_array($data['config_split'], self::SCHEMA['config_split'], TRUE)) {
+      return $data;
+    }
+    if ($data['config_split'] === FALSE) {
+      $data['config_split'] = 'ignore';
+    }
+    elseif (is_string($data['config_split'])) {
+      $data += ['config_split_id' => $data['config_split']];
+      $data['config_split'] = 'enable';
+    }
+    return $data;
   }
 
   /**

@@ -131,8 +131,9 @@ if ($ddev_drupal['cacheability_headers']) {
   $settings['container_yamls'][] = '/var/www/html/.ddev/drupal/assets/services/cacheability-headers.services.yml';
 }
 
-if ($ddev_drupal['config_split']) {
-  $config['config_split.config_split.' . $ddev_drupal['config_split']]['status'] = TRUE;
+// 'ignore' leaves the split as its stored config says.
+if ($ddev_drupal['config_split'] !== 'ignore') {
+  $config['config_split.config_split.' . $ddev_drupal['config_split_id']]['status'] = $ddev_drupal['config_split'] === 'enable';
 }
 
 if ($ddev_drupal['stage_file_proxy']) {

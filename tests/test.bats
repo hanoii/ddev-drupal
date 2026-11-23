@@ -20,7 +20,7 @@ setup() {
 
   # One site directory per scenario, written before 'ddev start' so they are
   # in the container from the start (no waiting on Mutagen).
-  mkdir -p web/sites/default web/sites/cache web/sites/invalid web/sites/example
+  mkdir -p web/sites/default web/sites/cache web/sites/invalid web/sites/example web/sites/split
   # The shipped example, as copied by a user who only changes the preset.
   sed "s|// 'preset' => 'dev',|'preset' => 'cache',|" ${DIR}/drupal/assets/example.settings.ddev-drupal-config.php > web/sites/example/settings.ddev-drupal-config.php
   cat > web/sites/cache/settings.ddev-drupal-config.php <<'EOF'
@@ -30,6 +30,10 @@ EOF
   cat > web/sites/invalid/settings.ddev-drupal-config.php <<'EOF'
 <?php
 return ['cache' => 'maybe'];
+EOF
+  cat > web/sites/split/settings.ddev-drupal-config.php <<'EOF'
+<?php
+return ['preset' => 'prod', 'config_split' => 'disable', 'config_split_id' => 'local'];
 EOF
   # Loads settings.ddev-drupal.php for a site with a stub Drupal and prints
   # what it resolved and set.
@@ -49,6 +53,7 @@ echo json_encode([
   'yamls' => array_map('basename', $settings['container_yamls']),
   'providers' => array_keys($GLOBALS['conf']['container_service_providers'] ?? []),
   'bins' => $settings['cache']['bins'] ?? [],
+  'splits' => array_map(fn($c) => $c['status'], array_filter($config, fn($k) => str_starts_with($k, 'config_split.'), ARRAY_FILTER_USE_KEY)),
 ], JSON_UNESCAPED_SLASHES), "\n";
 EOF
 
@@ -84,6 +89,7 @@ teardown() {
   echo "$out" | grep -F '"preset":"dev"'
   echo "$out" | grep -F '"providers":["DdevDrupalTwigDebug"]'
   echo "$out" | grep -F '"render":"cache.backend.null"'
+  echo "$out" | grep -F '"splits":{"config_split.config_split.development":true}'
 
   # Overrides on top of a preset: caches stored but not served, twig debug on.
   out=$(ddev exec php probe.php cache)
@@ -98,6 +104,12 @@ teardown() {
   echo "$out" | grep -F '"preset":"cache"'
   echo "$out" | grep -F '"cache":"normal"'
   echo "$out" | grep -F '"bins":[]'
+
+  # prod leaves the split alone, but it can still be forced off, by any id.
+  ddev exec env DDEV_DRUPAL_PRESET=prod php probe.php default | grep -F '"splits":[]'
+  out=$(ddev exec php probe.php split)
+  echo "$out"
+  echo "$out" | grep -F '"splits":{"config_split.config_split.local":false}'
 
   # Invalid values stop with an error naming them.
   run ddev exec php probe.php invalid
@@ -119,6 +131,11 @@ $settings['container_yamls'][] = '/var/www/html/.ddev/drupal/assets/dev.services
 $ddev_drupal_production = TRUE;
 EOF
   touch .ddev/drupal/assets/settings.local.php
+  mkdir -p web/sites/legacy-split
+  cat > web/sites/legacy-split/settings.ddev-drupal-config.php <<'EOF'
+<?php
+return ['config_split' => 'local'];
+EOF
   printf 'web_environment:\n  - DDEV_DRUPAL_CACHE_PRODUCTION=true\n' > .ddev/config.legacy.yaml
   out=$(ddev add-on get ${ADDON_DIR} 2>&1)
   echo "$out"
@@ -128,4 +145,15 @@ EOF
   echo "$out" | grep -F 'Deprecated: web/sites/default/settings.php loads .ddev/drupal/assets/dev.services.yml'
   echo "$out" | grep -F 'Deprecated: web/sites/default/settings.php sets $ddev_drupal_production'
   echo "$out" | grep -F 'Deprecated: .ddev/config.legacy.yaml sets DDEV_DRUPAL_PRODUCTION'
+  echo "$out" | grep -F "Deprecated: web/sites/legacy-split/settings.ddev-drupal-config.php sets 'config_split'"
+  # Neither the shipped example nor current values warn.
+  run grep -E 'web/sites/(example|split)/' <<< "$out"
+  [ "$status" -eq 1 ]
+
+  # A legacy split id still works, read as enabling that split.
+  ddev mutagen sync >/dev/null 2>&1 || true
+  out=$(ddev exec php probe.php legacy-split)
+  echo "$out"
+  echo "$out" | grep -F '"config_split":"enable"'
+  echo "$out" | grep -F '"splits":{"config_split.config_split.local":true}'
 }
