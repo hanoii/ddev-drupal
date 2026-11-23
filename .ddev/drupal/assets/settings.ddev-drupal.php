@@ -12,6 +12,9 @@
  * overrides in sites/<site>/settings.ddev-drupal-config.php. See
  * example.settings.ddev-drupal-config.php next to this file.
  *
+ * Project defaults for the same options, committed with the project, can be
+ * set in $ddev_drupal_defaults before including this file.
+ *
  * The resolved options are left in $ddev_drupal for any settings file
  * included after this one.
  */
@@ -29,7 +32,8 @@ if (is_readable(\Ddev\Drupal\SettingsConfig::LEGACY_FILE)) {
 $ddev_drupal = \Ddev\Drupal\SettingsConfig::resolve(
   $app_root . '/' . $site_path,
   isset($ddev_drupal_production) ? (bool) $ddev_drupal_production : NULL,
-  isset($ddev_drupal_cache_production) ? (bool) $ddev_drupal_cache_production : NULL
+  isset($ddev_drupal_cache_production) ? (bool) $ddev_drupal_cache_production : NULL,
+  $ddev_drupal_defaults ?? []
 );
 
 // Kept for project settings that still check them.

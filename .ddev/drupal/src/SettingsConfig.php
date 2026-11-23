@@ -6,15 +6,20 @@ namespace Ddev\Drupal;
 /**
  * Resolves the options that drive settings.ddev-drupal.php.
  *
- * Every option has a value from a preset, which a per-site
- * settings.ddev-drupal-config.php file can override key by key.
+ * Every option has a value from a preset, which project defaults set in
+ * $ddev_drupal_defaults and then a per-site settings.ddev-drupal-config.php
+ * file can override key by key.
  *
- * Precedence, lowest first:
+ * Preset precedence, lowest first:
  * - The default preset (dev).
+ * - 'preset' in $ddev_drupal_defaults.
  * - Legacy DDEV_DRUPAL_PRODUCTION / DDEV_DRUPAL_CACHE_PRODUCTION env vars.
  * - DDEV_DRUPAL_PRESET env var.
  * - Legacy $ddev_drupal_production / $ddev_drupal_cache_production variables.
  * - sites/<site>/settings.ddev-drupal-config.php.
+ *
+ * Other options, lowest first: the preset, $ddev_drupal_defaults,
+ * settings.ddev-drupal-config.php.
  */
 final class SettingsConfig {
 
@@ -76,12 +81,15 @@ final class SettingsConfig {
    *   The legacy $ddev_drupal_production variable, if set.
    * @param bool|null $legacy_cache_production
    *   The legacy $ddev_drupal_cache_production variable, if set.
+   * @param array $defaults
+   *   Project defaults, the $ddev_drupal_defaults variable.
    *
    * @return array
    *   Option => value, including 'preset'.
    */
-  public static function resolve(string $site_dir, ?bool $legacy_production = NULL, ?bool $legacy_cache_production = NULL): array {
-    $preset = self::DEFAULT_PRESET;
+  public static function resolve(string $site_dir, ?bool $legacy_production = NULL, ?bool $legacy_cache_production = NULL, array $defaults = []): array {
+    $defaults = self::validateAll($defaults, '$ddev_drupal_defaults');
+    $preset = $defaults['preset'] ?? self::DEFAULT_PRESET;
 
     $env_production = self::envBool('DDEV_DRUPAL_PRODUCTION');
     $env_cache_production = self::envBool('DDEV_DRUPAL_CACHE_PRODUCTION');
@@ -102,7 +110,8 @@ final class SettingsConfig {
     $overrides = self::readFile(rtrim($site_dir, '/') . '/' . self::FILENAME);
     $preset = $overrides['preset'] ?? $preset;
 
-    return ['preset' => $preset] + array_replace(self::PRESETS[$preset], array_diff_key($overrides, ['preset' => TRUE]));
+    $options = array_diff_key(array_replace($defaults, $overrides), ['preset' => TRUE]);
+    return ['preset' => $preset] + array_replace(self::PRESETS[$preset], $options);
   }
 
   /**
@@ -118,9 +127,16 @@ final class SettingsConfig {
     if (!is_array($data)) {
       throw new \UnexpectedValueException("$file must return an array.");
     }
+    return self::validateAll($data, $file);
+  }
+
+  /**
+   * Validates a set of options, after mapping deprecated values.
+   */
+  public static function validateAll(array $data, string $origin): array {
     $data = self::upgradeLegacy($data);
     foreach ($data as $key => $value) {
-      $data[$key] = self::validate($key, $value, $file);
+      $data[$key] = self::validate($key, $value, $origin);
     }
     return $data;
   }
