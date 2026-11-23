@@ -12,6 +12,7 @@
   * [settings.ddev-drupal.php](#settingsddev-drupalphp)
 - [Options](#options)
   * [Presets](#presets)
+  * [Project defaults](#project-defaults)
   * [The config file](#the-config-file)
   * [Environment variable](#environment-variable)
   * [Upgrading from earlier versions](#upgrading-from-earlier-versions)
@@ -38,8 +39,12 @@ adding it to their main settings.php:
 // .ddev/drupal/assets/example.settings.ddev-drupal-config.php next to this
 // file as settings.ddev-drupal-config.php (not committed) and uncomment what
 // you need. It is read on every request, no need to include it here.
+// Defaults for the whole project go in $ddev_drupal_defaults below.
 // See https://github.com/hanoii/ddev-drupal#options
 if (getenv('IS_DDEV_PROJECT') === 'true') {
+  $ddev_drupal_defaults = [
+    // 'config_split_id' => 'development',
+  ];
   $ddev_drupal_settings = '/var/www/html/.ddev/drupal/assets/settings.ddev-drupal.php';
   if (is_readable($ddev_drupal_settings)) {
     require $ddev_drupal_settings;
@@ -79,7 +84,8 @@ The rest is driven by options:
 ### Presets
 
 Every option gets its value from a preset, `dev` by default, and can then be
-overridden one by one in [the config file](#the-config-file).
+overridden one by one, first by the [project defaults](#project-defaults), then
+by [the config file](#the-config-file).
 
 | Option                 | `dev`         | `cache`       | `prod`        |
 | ---------------------- | ------------- | ------------- | ------------- |
@@ -95,6 +101,24 @@ overridden one by one in [the config file](#the-config-file).
 > [!CAUTION]
 > `prod` leaves only the always applied settings. Anything else a project
 > needs locally is up to the project.
+
+### Project defaults
+
+Defaults that the whole project should share, like the id of its config split,
+go in `$ddev_drupal_defaults`, set in the committed `settings.php` before
+including `settings.ddev-drupal.php`. It takes the same options as
+[the config file](#the-config-file), which still overrides them:
+
+```php
+$ddev_drupal_defaults = [
+  'config_split_id' => 'env_dev',
+];
+```
+
+An option set here applies whatever the preset, so prefer options that do not
+depend on it. A `'preset'` here is the project's base preset, which the
+[environment variable](#environment-variable) and the config file still
+override.
 
 ### The config file
 

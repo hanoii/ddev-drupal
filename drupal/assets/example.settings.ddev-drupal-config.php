@@ -6,7 +6,8 @@
  *
  * Copy to sites/<site>/settings.ddev-drupal-config.php, next to settings.php,
  * and uncomment what you need. Any option left commented out takes its value
- * from the preset, so changing only 'preset' moves every other option with it.
+ * from the project defaults ($ddev_drupal_defaults in settings.php) or else
+ * the preset, so changing only 'preset' moves every other option with it.
  *
  * It holds personal settings, so add it to your .gitignore, for example:
  * /web/sites/<site>/settings.ddev-drupal-config.php

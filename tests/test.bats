@@ -43,6 +43,10 @@ class Drupal { const VERSION = '11.0.0'; }
 $app_root = '/var/www/html/web';
 $site_path = 'sites/' . $argv[1];
 $settings = $config = [];
+// Same as a settings.php setting project defaults.
+if (getenv('PROBE_DEFAULTS') !== FALSE) {
+  $ddev_drupal_defaults = json_decode(getenv('PROBE_DEFAULTS'), TRUE);
+}
 // Same as a legacy settings.local.php setting it.
 if (getenv('PROBE_LEGACY_CACHE_PRODUCTION') !== FALSE) {
   $ddev_drupal_cache_production = (bool) getenv('PROBE_LEGACY_CACHE_PRODUCTION');
@@ -110,6 +114,18 @@ teardown() {
   out=$(ddev exec php probe.php split)
   echo "$out"
   echo "$out" | grep -F '"splits":{"config_split.config_split.local":false}'
+
+  # Project defaults override the preset, the config file overrides them, and
+  # their preset is below the env var.
+  out=$(ddev exec env 'PROBE_DEFAULTS={"config_split_id":"env_dev"}' php probe.php default)
+  echo "$out"
+  echo "$out" | grep -F '"splits":{"config_split.config_split.env_dev":true}'
+  ddev exec env 'PROBE_DEFAULTS={"config_split_id":"env_dev"}' php probe.php split | grep -F '"splits":{"config_split.config_split.local":false}'
+  ddev exec env 'PROBE_DEFAULTS={"preset":"cache"}' php probe.php default | grep -F '"preset":"cache"'
+  ddev exec env 'PROBE_DEFAULTS={"preset":"cache"}' DDEV_DRUPAL_PRESET=prod php probe.php default | grep -F '"preset":"prod"'
+  run ddev exec env 'PROBE_DEFAULTS={"cache":"maybe"}' php probe.php default
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -F "\$ddev_drupal_defaults: 'cache' must be one of"
 
   # Invalid values stop with an error naming them.
   run ddev exec php probe.php invalid
