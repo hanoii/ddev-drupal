@@ -38,7 +38,7 @@ return [
   // The config split 'config_split_id' names:
   // - 'enable': forced enabled.
   // - 'disable': forced disabled.
-  // - 'ignore': left as its stored config says (the prod preset).
+  // - 'ignore': left as its stored config says.
   // Either way it takes effect on the next drush config:import.
   // 'config_split' => 'enable',
   // 'config_split_id' => 'development',
