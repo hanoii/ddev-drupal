@@ -34,8 +34,13 @@ return [
   // X-Drupal-Cache-Tags / X-Drupal-Cache-Contexts debug headers.
   // 'cacheability_headers' => FALSE,
 
-  // Config split id forced enabled, or FALSE.
-  // 'config_split' => 'development',
+  // The config split 'config_split_id' names:
+  // - 'enable': forced enabled.
+  // - 'disable': forced disabled.
+  // - 'ignore': left as its stored config says (the prod preset).
+  // Either way it takes effect on the next drush config:import.
+  // 'config_split' => 'enable',
+  // 'config_split_id' => 'development',
 
   // Stage File Proxy hotlinking.
   // 'stage_file_proxy' => TRUE,
