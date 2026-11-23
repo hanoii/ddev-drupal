@@ -93,14 +93,14 @@ by [the config file](#the-config-file).
 | `cache`                | `none`        | `normal`      | `normal`      |
 | `twig_debug`           | `true`        | `false`       | `false`       |
 | `cacheability_headers` | `false`       | `false`       | `false`       |
-| `config_split`         | `enable`      | `enable`      | `ignore`      |
+| `config_split`         | `enable`      | `enable`      | `disable`     |
 | `config_split_id`      | `development` | `development` | `development` |
 | `stage_file_proxy`     | `true`        | `true`        | `false`       |
 
 <!-- prettier-ignore -->
 > [!CAUTION]
-> `prod` leaves only the always applied settings. Anything else a project
-> needs locally is up to the project.
+> `prod` leaves only the always applied settings, with the config split forced
+> off. Anything else a project needs locally is up to the project.
 
 ### Project defaults
 
@@ -115,8 +115,21 @@ $ddev_drupal_defaults = [
 ];
 ```
 
-An option set here applies whatever the preset, so prefer options that do not
-depend on it. A `'preset'` here is the project's base preset, which the
+An option set here applies whatever the preset. For one that should differ by
+preset, set it under `'presets'`, which overrides the defaults above for that
+preset only:
+
+```php
+$ddev_drupal_defaults = [
+  'config_split_id' => 'env_dev',
+  'presets' => [
+    // Leave the split as its stored config says when on prod.
+    'prod' => ['config_split' => 'ignore'],
+  ],
+];
+```
+
+A `'preset'` here, outside `'presets'`, is the project's base preset, which the
 [environment variable](#environment-variable) and the config file still
 override.
 
@@ -175,6 +188,9 @@ v1.24.8 or later):
 - The `DDEV_DRUPAL_PRODUCTION` / `DDEV_DRUPAL_CACHE_PRODUCTION` environment
   variables map to the same presets, now read as real booleans (`false` is
   false). Use `DDEV_DRUPAL_PRESET` instead.
+- The `prod` preset, which the legacy production flags map to, used to leave the
+  config split alone. It now forces it off. Set `'config_split' => 'ignore'` for
+  the old behaviour, per project under [`'presets'`](#project-defaults).
 - `'config_split'` in the config file used to hold the split id, or `false`. A
   split id is still read as `'enable'` with that `config_split_id`, and `false`
   as `'ignore'`. Use the new values instead.

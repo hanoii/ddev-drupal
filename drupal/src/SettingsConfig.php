@@ -18,8 +18,8 @@ namespace Ddev\Drupal;
  * - Legacy $ddev_drupal_production / $ddev_drupal_cache_production variables.
  * - sites/<site>/settings.ddev-drupal-config.php.
  *
- * Other options, lowest first: the preset, $ddev_drupal_defaults,
- * settings.ddev-drupal-config.php.
+ * Other options, lowest first: the preset, $ddev_drupal_defaults, its
+ * 'presets' entry for the resolved preset, settings.ddev-drupal-config.php.
  */
 final class SettingsConfig {
 
@@ -66,7 +66,7 @@ final class SettingsConfig {
       'cache' => 'normal',
       'twig_debug' => FALSE,
       'cacheability_headers' => FALSE,
-      'config_split' => 'ignore',
+      'config_split' => 'disable',
       'config_split_id' => 'development',
       'stage_file_proxy' => FALSE,
     ],
@@ -88,7 +88,8 @@ final class SettingsConfig {
    *   Option => value, including 'preset'.
    */
   public static function resolve(string $site_dir, ?bool $legacy_production = NULL, ?bool $legacy_cache_production = NULL, array $defaults = []): array {
-    $defaults = self::validateAll($defaults, '$ddev_drupal_defaults');
+    $preset_defaults = self::validatePresetDefaults($defaults['presets'] ?? []);
+    $defaults = self::validateAll(array_diff_key($defaults, ['presets' => TRUE]), '$ddev_drupal_defaults');
     $preset = $defaults['preset'] ?? self::DEFAULT_PRESET;
 
     $env_production = self::envBool('DDEV_DRUPAL_PRODUCTION');
@@ -110,7 +111,7 @@ final class SettingsConfig {
     $overrides = self::readFile(rtrim($site_dir, '/') . '/' . self::FILENAME);
     $preset = $overrides['preset'] ?? $preset;
 
-    $options = array_diff_key(array_replace($defaults, $overrides), ['preset' => TRUE]);
+    $options = array_diff_key(array_replace($defaults, $preset_defaults[$preset] ?? [], $overrides), ['preset' => TRUE]);
     return ['preset' => $preset] + array_replace(self::PRESETS[$preset], $options);
   }
 
@@ -139,6 +140,24 @@ final class SettingsConfig {
       $data[$key] = self::validate($key, $value, $origin);
     }
     return $data;
+  }
+
+  /**
+   * Validates $ddev_drupal_defaults['presets']: preset => options.
+   */
+  private static function validatePresetDefaults($presets): array {
+    $origin = "\$ddev_drupal_defaults['presets']";
+    if (!is_array($presets)) {
+      throw new \InvalidArgumentException("$origin must be an array of preset => options.");
+    }
+    foreach ($presets as $preset => $options) {
+      self::validate('preset', $preset, "$origin key");
+      if (!is_array($options) || isset($options['preset'])) {
+        throw new \InvalidArgumentException($origin . "['$preset'] must be an array of options, without 'preset'.");
+      }
+      $presets[$preset] = self::validateAll($options, $origin . "['$preset']");
+    }
+    return $presets;
   }
 
   /**

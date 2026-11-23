@@ -33,7 +33,7 @@ return ['cache' => 'maybe'];
 EOF
   cat > web/sites/split/settings.ddev-drupal-config.php <<'EOF'
 <?php
-return ['preset' => 'prod', 'config_split' => 'disable', 'config_split_id' => 'local'];
+return ['preset' => 'prod', 'config_split' => 'ignore', 'config_split_id' => 'local'];
 EOF
   # Loads settings.ddev-drupal.php for a site with a stub Drupal and prints
   # what it resolved and set.
@@ -109,23 +109,42 @@ teardown() {
   echo "$out" | grep -F '"cache":"normal"'
   echo "$out" | grep -F '"bins":[]'
 
-  # prod leaves the split alone, but it can still be forced off, by any id.
-  ddev exec env DDEV_DRUPAL_PRESET=prod php probe.php default | grep -F '"splits":[]'
+  # prod forces the split off, but it can still be left alone.
+  ddev exec env DDEV_DRUPAL_PRESET=prod php probe.php default | grep -F '"splits":{"config_split.config_split.development":false}'
   out=$(ddev exec php probe.php split)
   echo "$out"
-  echo "$out" | grep -F '"splits":{"config_split.config_split.local":false}'
+  echo "$out" | grep -F '"splits":[]'
 
   # Project defaults override the preset, the config file overrides them, and
   # their preset is below the env var.
   out=$(ddev exec env 'PROBE_DEFAULTS={"config_split_id":"env_dev"}' php probe.php default)
   echo "$out"
   echo "$out" | grep -F '"splits":{"config_split.config_split.env_dev":true}'
-  ddev exec env 'PROBE_DEFAULTS={"config_split_id":"env_dev"}' php probe.php split | grep -F '"splits":{"config_split.config_split.local":false}'
+  ddev exec env 'PROBE_DEFAULTS={"config_split_id":"env_dev","presets":{"dev":{"config_split":"disable"}}}' php probe.php cache | grep -F '"splits":{"config_split.config_split.env_dev":true}'
   ddev exec env 'PROBE_DEFAULTS={"preset":"cache"}' php probe.php default | grep -F '"preset":"cache"'
   ddev exec env 'PROBE_DEFAULTS={"preset":"cache"}' DDEV_DRUPAL_PRESET=prod php probe.php default | grep -F '"preset":"prod"'
   run ddev exec env 'PROBE_DEFAULTS={"cache":"maybe"}' php probe.php default
   [ "$status" -ne 0 ]
   echo "$output" | grep -F "\$ddev_drupal_defaults: 'cache' must be one of"
+
+  # Per-preset defaults apply under their preset only, over the plain defaults,
+  # and below the config file.
+  defaults='PROBE_DEFAULTS={"config_split_id":"env_dev","twig_debug":false,"presets":{"prod":{"config_split":"ignore"},"dev":{"twig_debug":true,"config_split_id":"dev_only"}}}'
+  out=$(ddev exec env "$defaults" php probe.php default)
+  echo "$out"
+  echo "$out" | grep -F '"twig_debug":true'
+  echo "$out" | grep -F '"splits":{"config_split.config_split.dev_only":true}'
+  out=$(ddev exec env "$defaults" DDEV_DRUPAL_PRESET=prod php probe.php default)
+  echo "$out"
+  echo "$out" | grep -F '"splits":[]'
+  ddev exec env "$defaults" php probe.php cache | grep -F '"twig_debug":true'
+  ddev exec env "$defaults" php probe.php cache | grep -F '"splits":{"config_split.config_split.env_dev":true}'
+  run ddev exec env 'PROBE_DEFAULTS={"presets":{"stage":{}}}' php probe.php default
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -F "'preset' must be one of"
+  run ddev exec env 'PROBE_DEFAULTS={"presets":{"dev":{"preset":"prod"}}}' php probe.php default
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -F "without 'preset'"
 
   # Invalid values stop with an error naming them.
   run ddev exec php probe.php invalid
